@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,10 @@ public class BudgetCategoryService {
     }
     public void deleteBudgetCategory(Integer id) {
         budgetCategoryRepo.deleteById(id);
+    }
+
+    public List<BudgetCategory> getAllBudgetCategories(){
+        return budgetCategoryRepo.findAll();
     }
 
    

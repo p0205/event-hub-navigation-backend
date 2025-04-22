@@ -18,7 +18,7 @@ import com.utem.event_hub_navigation.service.AttendanceService;
 import com.utem.event_hub_navigation.utils.QRCodeGenerator;
 
 @RestController
-@RequestMapping("/api/attendance")
+@RequestMapping("/attendance")
 public class AttendanceController {
 
     @Autowired

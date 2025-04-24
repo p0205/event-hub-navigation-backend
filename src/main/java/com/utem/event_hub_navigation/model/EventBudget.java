@@ -26,7 +26,7 @@ public class EventBudget {
     private Double amountAllocated;
     private Double amountSpent;
 
-        // Add this: link back to Event
+    // Add this: link back to Event
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("eventId") // maps the eventId part of the embedded ID
     @JoinColumn(name = "event_id")

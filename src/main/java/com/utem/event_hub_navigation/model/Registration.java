@@ -1,8 +1,15 @@
 package com.utem.event_hub_navigation.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import com.beust.jcommander.internal.Nullable;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,9 +26,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
+@EntityListeners(AuditingEntityListener.class)
 
 public class Registration {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -34,5 +42,9 @@ public class Registration {
     @JoinColumn(name = "user_id",nullable = false)
     private User participant;
     
-    private LocalDate date;
+    @CreatedDate
+    private LocalDate register_date;
+
+    @Nullable
+    private LocalDateTime checkinDateTime;
 }

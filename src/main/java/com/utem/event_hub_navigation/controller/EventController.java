@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.utem.event_hub_navigation.dto.EventDTO;
+import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.service.EventService;
@@ -80,16 +81,16 @@ public class EventController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<List<Event>> getAllActiveEvents() {
-        List<Event> events = eventService.getAllActiveEvents();
+    public ResponseEntity<List<EventDTO>> getAllActiveEvents() {
+        List<EventDTO> events = eventService.getAllActiveEvents();
         // Note: If you need organizer details here, ensure your service/repository
         // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
         return ResponseEntity.ok(events);
     }
 
     @GetMapping("/completed")
-    public ResponseEntity<List<Event>> getAllCompletedEvents() {
-        List<Event> events = eventService.getAllCompletedEvents();
+    public ResponseEntity<List<EventDTO>> getAllCompletedEvents() {
+        List<EventDTO> events = eventService.getAllCompletedEvents();
         // Note: If you need organizer details here, ensure your service/repository
         // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
         return ResponseEntity.ok(events);
@@ -164,6 +165,22 @@ public class EventController {
 
         List<Event> events = eventService.getEventsByOrganizer(organizerId);
         return ResponseEntity.ok(events);
+    }
+
+    @PostMapping("/{eventId}/participants/getInfo")
+    public ResponseEntity<List<UserDTO>> importParticipants(
+            // @PathVariable Long eventId,
+            @RequestParam("file") MultipartFile file) {
+
+        List<UserDTO> participantList = eventService.getParticipantsInfoFromFile(file);
+        return ResponseEntity.ok(participantList);
+    }
+
+    @PostMapping("/{eventId}/participants/importData")
+    public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId, @RequestBody List<UserDTO> participantList) {
+
+        List<UserDTO> registeredList = eventService.importParticipants(eventId,participantList);
+        return ResponseEntity.ok(registeredList);
     }
 
 }

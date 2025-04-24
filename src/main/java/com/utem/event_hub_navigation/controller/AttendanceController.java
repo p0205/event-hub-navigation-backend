@@ -24,11 +24,11 @@ public class AttendanceController {
     @Autowired
     private AttendanceService attendanceService;
 
-    @PostMapping("/mark")
-    public ResponseEntity<String> markAttendance(@RequestBody AttendanceRequest request) {
-        String response = attendanceService.markAttendance(request.getUserId(), request.getQrData());
-        return ResponseEntity.ok(response);
-    }
+    // @PostMapping("/mark")
+    // public ResponseEntity<String> markAttendance(@RequestBody AttendanceRequest request) {
+    //     String response = attendanceService.markAttendance(request.getUserId(), request.getQrData());
+    //     return ResponseEntity.ok(response);
+    // }
 
     @GetMapping(value = "/qr_code_download", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> downloadQRCode(@RequestParam String text) {

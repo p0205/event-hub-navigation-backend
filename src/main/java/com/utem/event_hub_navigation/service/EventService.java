@@ -71,7 +71,9 @@ public class EventService {
 
     public EventDTO createEvent(EventDTO dto) {
         Event event = eventMapper.toEntity(dto);
-
+        System.out.println("Event before saving: " + dto);
+        
+        System.out.println("Event before saving: " + event);
         // // Manually set back-reference
         // event.getEventVenues().forEach(ev -> ev.setEvent(event));
         // event.getEventBudgets().forEach(eb -> eb.setEvent(event));

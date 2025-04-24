@@ -40,4 +40,6 @@ public class EventMapperHelper {
         return budgetCategoryRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Budget category not found"));
     }
+
+    
 }

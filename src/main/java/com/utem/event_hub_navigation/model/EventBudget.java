@@ -37,6 +37,7 @@ public class EventBudget {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("budgetId") // maps the venueId part of the embedded ID
     @JoinColumn(name = "budget_id")
-    private BudgetCategory budgetCategory; // assuming you have a Venue entity
+    @JsonBackReference
+    private BudgetCategory budgetCategory; 
 
 }

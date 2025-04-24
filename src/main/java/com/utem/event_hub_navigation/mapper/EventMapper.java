@@ -20,6 +20,11 @@ public interface EventMapper {
     @Mapping(target = "eventBudgets", source = "eventBudgets")
     Event toEntity(EventDTO dto);
 
+    @Mapping(source = "organizerId", target = "organizer", qualifiedByName = "mapUser")
+    @Mapping(target = "eventVenues", source = "eventVenues")
+    @Mapping(target = "eventBudgets", source = "eventBudgets")
+    List<EventDTO> toEventDTOs (List<Event> events);
+
     @Mapping(source = "venueId", target = "venue", qualifiedByName = "mapVenue")
     @Mapping(target = "event", ignore = true) // Set manually if needed
     @Mapping(target = "id", ignore = true) // You’ll populate it manually

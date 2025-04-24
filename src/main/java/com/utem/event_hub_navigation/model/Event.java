@@ -64,7 +64,7 @@ public class Event {
     private String qrCodePath;
 
     @Nullable
-    @OneToOne
+    @OneToOne(cascade = CascadeType.PERSIST) // Add cascade here
     private Document supportingDocument;
 
     private Integer participantsNo;

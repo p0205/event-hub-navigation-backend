@@ -140,6 +140,18 @@ public class EventService {
 // }
 
 
+    public List<EventDTO> getAllPendingEvents(){
+        return eventMapper.toEventDTOs(eventRepo.findByStatus(EventStatus.PENDING));
+    }
+
+    public List<Event> getAllActiveEvents(){
+        return eventRepo.findByStatus(EventStatus.ACTIVE);
+    }
+
+    public List<Event> getAllCompletedEvents(){
+        return eventRepo.findByStatus(EventStatus.COMPLETED);
+    }
+
     public Event updateEvent(Integer eventId, EventDTO updatedEvent, Integer organizerId) {
         // Find the existing event
         Event existingEvent = eventRepo.findById(eventId)

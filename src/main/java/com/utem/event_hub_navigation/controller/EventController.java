@@ -31,10 +31,11 @@ public class EventController {
     private final EventService eventService;
 
     @Autowired
-     // --- Use constructor injection for ObjectMapper and EventService ---
-     public EventController(EventService eventService) {
+    // --- Use constructor injection for ObjectMapper and EventService ---
+    public EventController(EventService eventService) {
         this.eventService = eventService;
-        // You do NOT need to manually register the module here if using Spring Boot auto-config
+        // You do NOT need to manually register the module here if using Spring Boot
+        // auto-config
         // If NOT using Spring Boot or auto-config is disabled, you would:
         // this.objectMapper.registerModule(new JavaTimeModule());
     }
@@ -53,41 +54,15 @@ public class EventController {
             @RequestPart("participantsNo") String participantsNoString,
             @RequestPart("eventVenues") String eventVenuesJson,
             @RequestPart("eventBudgets") String eventBudgetsJson,
-            @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument
-    ) {
+            @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
-            name, description, organizerIdString, startDateTime, endDateTime,
-            participantsNoString, eventVenuesJson, eventBudgetsJson, supportingDocument
-        );
-    
+                name, description, organizerIdString, startDateTime, endDateTime,
+                participantsNoString, eventVenuesJson, eventBudgetsJson, supportingDocument);
+
         Event savedEvent = eventService.createEvent(dto);
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
-    
-// @PostMapping( consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-// public ResponseEntity<String> handleMultipartTest(
-//     @RequestPart("name") String name,
-//     @RequestPart("description") String description,
-//     @RequestPart("organizerId") Integer organizerId,
-//     @RequestPart("startDateTime") String startDateTime,
-//     @RequestPart("endDateTime") String endDateTime,
-//     @RequestPart("participantsNo") Integer participantsNo,
-//     @RequestPart("eventVenues") String eventVenuesJson,
-//     @RequestPart("eventBudgets") String eventBudgetsJson,
-//     @RequestPart(value = "supportingDocument", required = false) MultipartFile file
 
-// ) {
-//     System.out.println("Multipart request received!");
-//     System.out.println("Name: " + name);
-//     if (file != null) {
-//         System.out.println("File received: " + file.getOriginalFilename());
-//     } else {
-//          System.out.println("No file received.");
-//     }
-//     return ResponseEntity.ok("Multipart data processed test");
-// }
-
-//     // Get all events
     // GET /events
     @GetMapping
     public ResponseEntity<List<Event>> getAllEvents() {
@@ -97,11 +72,35 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
+    @GetMapping("/pending")
+    public ResponseEntity<List<EventDTO>> getAllPendingEvents() {
+        List<EventDTO> events = eventService.getAllPendingEvents();
+
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Event>> getAllActiveEvents() {
+        List<Event> events = eventService.getAllActiveEvents();
+        // Note: If you need organizer details here, ensure your service/repository
+        // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/completed")
+    public ResponseEntity<List<Event>> getAllCompletedEvents() {
+        List<Event> events = eventService.getAllCompletedEvents();
+        // Note: If you need organizer details here, ensure your service/repository
+        // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
+        return ResponseEntity.ok(events);
+    }
+
     // Get event by ID
     // GET /events/{id}
     @GetMapping("/{id}")
     public ResponseEntity<Event> getEventById(@PathVariable Integer id) {
-        // The fetched event will include the associated organizer (potentially lazily loaded)
+        // The fetched event will include the associated organizer (potentially lazily
+        // loaded)
         return eventService.getEventById(id)
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + id));
@@ -109,7 +108,8 @@ public class EventController {
 
     // Update an existing event
     // PATCH /events/{id}... (organizerId is optional if not changing organizer)
-    // Request body contains updated event details (excluding the complex User object)
+    // Request body contains updated event details (excluding the complex User
+    // object)
     @PatchMapping("/{id}")
     public ResponseEntity<Event> updateEvent(
             @PathVariable Integer id,
@@ -129,7 +129,7 @@ public class EventController {
         if (isDeleted) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + id);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + id);
         }
     }
 
@@ -150,15 +150,15 @@ public class EventController {
     // GET /events/byDate?date=YYYY-MM-DD
     // @GetMapping("/byDate")
     // public ResponseEntity<List<Event>> getEventsByDate(
-    //         @RequestParam LocalDate date) {
+    // @RequestParam LocalDate date) {
 
-    //     List<Event> events = eventService.getEventsByDate(date);
-    //     return ResponseEntity.ok(events);
+    // List<Event> events = eventService.getEventsByDate(date);
+    // return ResponseEntity.ok(events);
     // }
 
     // Get events by organizer User ID
     // GET /events/byOrganizer?organizerId=...
-     @GetMapping("/byOrganizer")
+    @GetMapping("/byOrganizer")
     public ResponseEntity<List<Event>> getEventsByOrganizer(
             @RequestParam Integer organizerId) {
 

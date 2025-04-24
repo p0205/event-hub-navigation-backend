@@ -2,7 +2,7 @@ package com.utem.event_hub_navigation.model;
 
 public enum EventStatus {
     PENDING,
-    APPROVED,
+    ACTIVE,
     REJECTED,
     CANCELLED,
     COMPLETED,

@@ -19,4 +19,7 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
     // You might also want to find events by just the organizer user
     List<Event> findByOrganizer(User organizer);
 
+
+    List<Event> findByStatus(EventStatus status);
+
 }

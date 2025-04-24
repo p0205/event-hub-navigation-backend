@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 
-
 public class EventDTO {
 
     private Integer id;
@@ -34,12 +33,9 @@ public class EventDTO {
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endDateTime;
-   
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
-
-
 
     private String qrCodePath; // optional
 
@@ -49,9 +45,7 @@ public class EventDTO {
 
     @Builder.Default
     private List<EventVenueDTO> eventVenues = new ArrayList<>();
-    
+
     @Builder.Default
     private List<EventBudgetDTO> eventBudgets = new ArrayList<>();
 }
-
-

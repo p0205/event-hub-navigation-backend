@@ -8,5 +8,5 @@ import lombok.Data;
 public class EventBudgetDTO {
  private BigDecimal amountAllocated;
     private BigDecimal amountSpent;
-    private Long budgetCategoryId; // Just the ID
+    private Integer budgetCategoryId; // Just the ID
 }

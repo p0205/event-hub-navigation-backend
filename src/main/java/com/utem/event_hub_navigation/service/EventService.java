@@ -60,7 +60,8 @@ public class EventService {
     private RegistrationRepo registrationRepo;
 
     @Autowired
-    public EventService(EventRepo eventRepo, UserRepo userRepo, EventMapper eventMapper, UserMapper userMapper, RegistrationRepo registrationRepo) {
+    public EventService(EventRepo eventRepo, UserRepo userRepo, EventMapper eventMapper, UserMapper userMapper,
+            RegistrationRepo registrationRepo) {
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.eventMapper = eventMapper;
@@ -68,7 +69,7 @@ public class EventService {
         this.registrationRepo = registrationRepo;
     }
 
-    public Event createEvent(EventDTO dto) {
+    public EventDTO createEvent(EventDTO dto) {
         Event event = eventMapper.toEntity(dto);
 
         // // Manually set back-reference
@@ -89,7 +90,7 @@ public class EventService {
             key.setVenueId(venue.getVenue().getId());
             venue.setId(key);
         }
-        return eventRepo.save(event);
+        return eventMapper.tDto(eventRepo.save(event));
     }
 
     public EventDTO prepareAndValidateEvent(
@@ -220,8 +221,11 @@ public class EventService {
         return eventRepo.save(existingEvent);
     }
 
-    public Optional<Event> getEventById(Integer id) {
-        return eventRepo.findById(id);
+    public EventDTO getEventById(Integer id) {
+        Optional<Event> optionalEvent = eventRepo.findById(id);
+
+        return eventMapper.tDto(optionalEvent.get());
+
     }
 
     public List<Event> getAllEvents() {
@@ -320,11 +324,11 @@ public class EventService {
             boolean alreadyRegistered = registrationRepo.existsByEventAndParticipant(event, user);
             if (!alreadyRegistered) {
                 Registration registration = Registration.builder()
-                .event(event)
-                .participant(user)
-                .checkinDateTime(null)
-                .register_date(LocalDate.now())
-                .build();
+                        .event(event)
+                        .participant(user)
+                        .checkinDateTime(null)
+                        .register_date(LocalDate.now())
+                        .build();
 
                 registrationRepo.save(registration);
             }

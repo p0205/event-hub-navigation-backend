@@ -46,7 +46,7 @@ public class EventController {
     // The request body should contain event details *without* the full User object,
     // but the organizerId is passed as a request parameter.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createEvent(
+    public ResponseEntity<EventDTO> createEvent(
             @RequestPart("name") String name,
             @RequestPart("description") String description,
             @RequestPart("organizerId") String organizerIdString,
@@ -60,7 +60,8 @@ public class EventController {
                 name, description, organizerIdString, startDateTime, endDateTime,
                 participantsNoString, eventVenuesJson, eventBudgetsJson, supportingDocument);
 
-        Event savedEvent = eventService.createEvent(dto);
+        EventDTO savedEvent = eventService.createEvent(dto);
+        
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
 
@@ -99,12 +100,13 @@ public class EventController {
     // Get event by ID
     // GET /events/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Integer id) {
+    public ResponseEntity<EventDTO> getEventById(@PathVariable Integer id) {
         // The fetched event will include the associated organizer (potentially lazily
         // loaded)
-        return eventService.getEventById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + id));
+        EventDTO event = eventService.getEventById(id);
+        if (event != null)
+            return ResponseEntity.ok(eventService.getEventById(id));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
     // Update an existing event
@@ -177,9 +179,10 @@ public class EventController {
     }
 
     @PostMapping("/{eventId}/participants/importData")
-    public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId, @RequestBody List<UserDTO> participantList) {
+    public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId,
+            @RequestBody List<UserDTO> participantList) {
 
-        List<UserDTO> registeredList = eventService.importParticipants(eventId,participantList);
+        List<UserDTO> registeredList = eventService.importParticipants(eventId, participantList);
         return ResponseEntity.ok(registeredList);
     }
 

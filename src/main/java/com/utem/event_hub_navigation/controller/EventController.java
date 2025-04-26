@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.utem.event_hub_navigation.dto.EventDTO;
+import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
@@ -66,13 +67,13 @@ public class EventController {
     }
 
     // GET /events
-    @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents() {
-        List<Event> events = eventService.getAllEvents();
-        // Note: If you need organizer details here, ensure your service/repository
-        // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
-        return ResponseEntity.ok(events);
-    }
+    // @GetMapping
+    // public ResponseEntity<List<Event>> getAllEvents() {
+    //     List<Event> events = eventService.getAllEvents();
+    //     // Note: If you need organizer details here, ensure your service/repository
+    //     // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
+    //     return ResponseEntity.ok(events);
+    // }
 
     @GetMapping("/pending")
     public ResponseEntity<List<EventDTO>> getAllPendingEvents() {
@@ -109,6 +110,17 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
+    // GET /events/{id/name}
+    @GetMapping("{id}/name")
+    public ResponseEntity<String> getEventNameById(@PathVariable Integer id) {
+        // The fetched event will include the associated organizer (potentially lazily
+        // loaded)
+        String eventName = eventService.getEventName(id);
+        if (eventName != null)
+            return ResponseEntity.ok(eventName);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
     // Update an existing event
     // PATCH /events/{id}... (organizerId is optional if not changing organizer)
     // Request body contains updated event details (excluding the complex User
@@ -140,14 +152,15 @@ public class EventController {
 
     // Get events by organizer User ID and status
     // GET /api/events/search?organizerId=...&status=...
-    @GetMapping("/byOrganizerAndStatus")
-    public ResponseEntity<List<Event>> getEventsByOrganizerAndStatus(
-            @RequestParam Integer organizerId, // Accept organizer ID
-            @RequestParam EventStatus status) {
+    // @GetMapping("/byOrganizerAndStatus")
+    // public ResponseEntity<List<Event>> getEventsByOrganizerAndStatus(
+    //         @RequestParam Integer organizerId, // Accept organizer ID
+    //         @RequestParam EventStatus status,
+    //         @RequestParam String sortBy) {
 
-        List<Event> events = eventService.getEventsByEventOrganizerAndStatus(organizerId, status);
-        return ResponseEntity.ok(events);
-    }
+    //     List<Event> events = eventService.getEventsByEventOrganizerAndStatus(organizerId, status,sortBy);
+    //     return ResponseEntity.ok(events);
+    // }
 
     // Get events by date
     // GET /events/byDate?date=YYYY-MM-DD
@@ -162,10 +175,10 @@ public class EventController {
     // Get events by organizer User ID
     // GET /events/byOrganizer?organizerId=...
     @GetMapping("/byOrganizer")
-    public ResponseEntity<List<Event>> getEventsByOrganizer(
+    public ResponseEntity<EventResponseByStatus> getEventsByOrganizer(
             @RequestParam Integer organizerId) {
 
-        List<Event> events = eventService.getEventsByOrganizer(organizerId);
+        EventResponseByStatus events = eventService.getEventsByOrganizerGroupedByStatus(organizerId);
         return ResponseEntity.ok(events);
     }
 

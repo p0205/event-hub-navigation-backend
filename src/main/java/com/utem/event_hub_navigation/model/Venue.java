@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 
-
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Venue {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

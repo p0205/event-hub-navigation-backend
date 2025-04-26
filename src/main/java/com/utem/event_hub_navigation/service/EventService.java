@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
+import com.utem.event_hub_navigation.dto.EventResponseByStatus;
+import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.EventVenueDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.mapper.EventMapper;
@@ -72,7 +74,7 @@ public class EventService {
     public EventDTO createEvent(EventDTO dto) {
         Event event = eventMapper.toEntity(dto);
         System.out.println("Event before saving: " + dto);
-        
+
         System.out.println("Event before saving: " + event);
         // // Manually set back-reference
         // event.getEventVenues().forEach(ev -> ev.setEvent(event));
@@ -161,6 +163,10 @@ public class EventService {
     // }
     // }
 
+    public String getEventName(Integer eventId) {
+        return eventRepo.findNameById(eventId);
+    }
+
     public List<EventDTO> getAllPendingEvents() {
         return eventMapper.toEventDTOs(eventRepo.findByStatus(EventStatus.PENDING));
     }
@@ -239,16 +245,48 @@ public class EventService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Organizer User not found with ID: " + organizerId));
 
-        return eventRepo.findByOrganizer(organizer);
+        return eventRepo.findByOrganizerOrderByStartDateTimeDesc(organizer);
     }
 
-    public List<Event> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status) {
-        User organizer = userRepo.findById(organizerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Organizer User not found with ID: " + organizerId));
+    public EventResponseByStatus getEventsByOrganizerGroupedByStatus(Integer organizerId) {
+        List<Event> allEvents = getEventsByOrganizer(organizerId);
 
-        return eventRepo.findByOrganizerAndStatus(organizer, status);
+        List<EventSimpleResponse> pendingEvents = new ArrayList<>();
+        
+        List<EventSimpleResponse> activeEvents = new ArrayList<>();
+        List<EventSimpleResponse> completedEvents = new ArrayList<>();
+
+        for (Event event : allEvents) {
+            EventSimpleResponse eventSimpleResponse = EventSimpleResponse.builder()
+                    .id(event.getId())
+                    .name(event.getName())
+                    .startDateTime(event.getStartDateTime())
+                    .status(event.getStatus())
+                    .build();
+
+            if (event.getStatus() == EventStatus.PENDING) {
+                pendingEvents.add(eventSimpleResponse);
+            } else if (event.getStatus() == EventStatus.ACTIVE) {
+                activeEvents.add(eventSimpleResponse);
+            } else if (event.getStatus() == EventStatus.COMPLETED) {
+                completedEvents.add(eventSimpleResponse);
+            }
+        }
+
+        return EventResponseByStatus.builder()
+                .pendingEvents(pendingEvents)
+                .activeEvents(activeEvents)
+                .completedEvents(completedEvents)
+                .build();
     }
+
+    // public List<Event> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status, String sortBy) {
+    //     User organizer = userRepo.findById(organizerId)
+    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+    //                     "Organizer User not found with ID: " + organizerId));
+
+    //     return eventRepo.findByOrganizerAndStatus(organizer, status);
+    // }
 
     // public List<Event> getEventsByDate(LocalDate date) {
 

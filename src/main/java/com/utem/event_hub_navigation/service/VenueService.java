@@ -22,7 +22,7 @@ public class VenueService {
         venueRepo.save(venue);
     }
 
-    public Venue getVenues(Integer venueId) {
+    public Venue getVenue(Integer venueId) {
         return venueRepo.findById(venueId).orElse(null);
     }
 

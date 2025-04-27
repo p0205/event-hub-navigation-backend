@@ -12,5 +12,7 @@ public class UserDTO {
     private String phoneNo;
     private Character gender;
     private String faculty;
+    private String course;
+    private String year;
     private String role;
 }

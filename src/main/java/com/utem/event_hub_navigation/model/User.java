@@ -56,6 +56,9 @@ public class User {
 
     private String faculty;
 
+    private String course;
+    private String year;
+
     private String role; 
 
     @CreatedDate

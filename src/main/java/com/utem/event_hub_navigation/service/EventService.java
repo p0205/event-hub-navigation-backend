@@ -262,6 +262,7 @@ public class EventService {
                     .name(event.getName())
                     .startDateTime(event.getStartDateTime())
                     .status(event.getStatus())
+                    .createdAt(event.getCreatedAt())
                     .build();
 
             if (event.getStatus() == EventStatus.PENDING) {
@@ -277,16 +278,29 @@ public class EventService {
                 .pendingEvents(pendingEvents)
                 .activeEvents(activeEvents)
                 .completedEvents(completedEvents)
+
                 .build();
     }
 
-    // public List<Event> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status, String sortBy) {
-    //     User organizer = userRepo.findById(organizerId)
-    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-    //                     "Organizer User not found with ID: " + organizerId));
+    public List<EventSimpleResponse> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status) {
+        User organizer = userRepo.findById(organizerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Organizer User not found with ID: " + organizerId));
 
-    //     return eventRepo.findByOrganizerAndStatus(organizer, status);
-    // }
+        List<Event> events = eventRepo.findByOrganizerAndStatusOrderByStartDateTimeAsc(organizer, status);
+        List<EventSimpleResponse> eventSimpleResponses = new ArrayList<>();
+        for (Event event : events) {
+            EventSimpleResponse eventSimpleResponse = EventSimpleResponse.builder()
+                    .id(event.getId())
+                    .name(event.getName())
+                    .startDateTime(event.getStartDateTime())
+                    .status(event.getStatus())
+                    .createdAt(event.getCreatedAt())
+                    .build();
+            eventSimpleResponses.add(eventSimpleResponse);
+        }
+        return eventSimpleResponses;
+    }
 
     // public List<Event> getEventsByDate(LocalDate date) {
 

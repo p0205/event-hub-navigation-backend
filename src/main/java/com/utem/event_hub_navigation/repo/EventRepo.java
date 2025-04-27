@@ -14,7 +14,7 @@ import com.utem.event_hub_navigation.model.User;
 @Repository
 public interface EventRepo extends JpaRepository<Event, Integer> {
 
-    // List<Event> findByOrganizerAndStatusOrderByStartDateTimeAsc(User organizer, EventStatus status);
+    List<Event> findByOrganizerAndStatusOrderByStartDateTimeAsc(User organizer, EventStatus status);
 
     // List<Event> findByOrganizerAndStatusOrderByStartDateTimeDesc(User organizer, EventStatus status);
 

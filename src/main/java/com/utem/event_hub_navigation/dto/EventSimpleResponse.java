@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.utem.event_hub_navigation.model.EventStatus;
@@ -14,4 +15,5 @@ public class EventSimpleResponse {
     private String name;
     private LocalDateTime startDateTime;
     private EventStatus status;
+    private LocalDate createdAt;
 }

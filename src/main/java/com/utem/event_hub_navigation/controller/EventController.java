@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
+import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
@@ -152,15 +153,14 @@ public class EventController {
 
     // Get events by organizer User ID and status
     // GET /api/events/search?organizerId=...&status=...
-    // @GetMapping("/byOrganizerAndStatus")
-    // public ResponseEntity<List<Event>> getEventsByOrganizerAndStatus(
-    //         @RequestParam Integer organizerId, // Accept organizer ID
-    //         @RequestParam EventStatus status,
-    //         @RequestParam String sortBy) {
+    @GetMapping("/byOrganizerAndStatus")
+    public ResponseEntity<List<EventSimpleResponse>> getEventsByOrganizerAndStatus(
+            @RequestParam Integer organizerId, // Accept organizer ID
+            @RequestParam EventStatus status) {
 
-    //     List<Event> events = eventService.getEventsByEventOrganizerAndStatus(organizerId, status,sortBy);
-    //     return ResponseEntity.ok(events);
-    // }
+        List<EventSimpleResponse> events = eventService.getEventsByEventOrganizerAndStatus(organizerId, status);
+        return ResponseEntity.ok(events);
+    }
 
     // Get events by date
     // GET /events/byDate?date=YYYY-MM-DD

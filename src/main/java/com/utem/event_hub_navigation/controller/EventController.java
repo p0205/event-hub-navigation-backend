@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -63,17 +64,17 @@ public class EventController {
                 participantsNoString, eventVenuesJson, eventBudgetsJson, supportingDocument);
 
         EventDTO savedEvent = eventService.createEvent(dto);
-        
+
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
 
     // GET /events
     // @GetMapping
     // public ResponseEntity<List<Event>> getAllEvents() {
-    //     List<Event> events = eventService.getAllEvents();
-    //     // Note: If you need organizer details here, ensure your service/repository
-    //     // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
-    //     return ResponseEntity.ok(events);
+    // List<Event> events = eventService.getAllEvents();
+    // // Note: If you need organizer details here, ensure your service/repository
+    // // uses FETCH JOIN or consider a DTO to avoid fetching large amounts of data.
+    // return ResponseEntity.ok(events);
     // }
 
     @GetMapping("/pending")
@@ -191,12 +192,18 @@ public class EventController {
         return ResponseEntity.ok(participantList);
     }
 
-    @PostMapping("/{eventId}/participants/importData")
+    @PostMapping("/{eventId}/participants")
     public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId,
             @RequestBody List<UserDTO> participantList) {
 
         List<UserDTO> registeredList = eventService.importParticipants(eventId, participantList);
-        return ResponseEntity.ok(registeredList);
+        return ResponseEntity.status(HttpStatus.CREATED).body(registeredList);
+    }
+
+    @GetMapping("/{eventId}/participants")
+    public ResponseEntity<List<UserDTO>> getParticipants(@PathVariable Integer eventId) {
+        List<UserDTO> participants = eventService.getParticipantsByEventId(eventId);
+        return ResponseEntity.ok(participants);
     }
 
 }

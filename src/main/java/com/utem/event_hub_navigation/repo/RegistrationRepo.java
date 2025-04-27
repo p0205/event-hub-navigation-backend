@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.repo;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +13,6 @@ import com.utem.event_hub_navigation.model.User;
 public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
 
     Registration findByEventAndParticipant(Event event, User user);
+    List<Registration> findByEvent(Event event);
     Boolean existsByEventAndParticipant(Event event, User user);
 }

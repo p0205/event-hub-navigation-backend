@@ -394,4 +394,17 @@ public class EventService {
         return results;
 
     }
+
+    public List<UserDTO> getParticipantsByEventId(Integer eventId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        List<Registration> registrations = registrationRepo.findByEvent(event);
+
+        List<UserDTO> participants = registrations.stream()
+                .map(registration -> userMapper.toUserDTO(registration.getParticipant()))
+                .collect(Collectors.toList());
+
+        return participants;
+    }
 }

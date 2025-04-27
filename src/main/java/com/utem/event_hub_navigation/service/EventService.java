@@ -395,7 +395,7 @@ public class EventService {
 
     }
 
-    public List<UserDTO> getParticipantsByEventId(Integer eventId) {
+    public List<UserDTO> getParticipantsByEventId (Integer eventId) {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 

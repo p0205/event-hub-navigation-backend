@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,4 +29,13 @@ public class UserService {
         List<User> users = userRepo.findByEmailIn(emails);
         return userMapper.toUserDTOs(users);
 }
+
+    public UserDTO getUserByEmail(String email) {
+        Optional<User> user = userRepo.findByEmail(email);
+        if (user.isEmpty()) {
+            return null;
+        }
+
+        return userMapper.toUserDTO(user.get());
+    }
 }

@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -204,6 +203,18 @@ public class EventController {
     public ResponseEntity<List<UserDTO>> getParticipants(@PathVariable Integer eventId) {
         List<UserDTO> participants = eventService.getParticipantsByEventId(eventId);
         return ResponseEntity.ok(participants);
+    }
+
+    @DeleteMapping("/{eventId}/participants/{participantId}")
+    public ResponseEntity<Void> removeParticipant(@PathVariable Integer eventId,
+            @PathVariable Integer participantId) {
+        boolean isRemoved = eventService.removeParticipant(eventId, participantId);
+        if (isRemoved) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Participant not found with ID: " + participantId + " in event ID: " + eventId);
+        }
     }
 
 }

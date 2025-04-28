@@ -407,4 +407,16 @@ public class EventService {
 
         return participants;
     }
+
+    public boolean removeParticipant(Integer eventId, Integer participantId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        User participant = userRepo.findById(participantId)
+                .orElseThrow(() -> new RuntimeException("Participant not found"));
+
+        Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
+        registrationRepo.delete(registration);
+        return true;
+    }
 }

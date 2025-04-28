@@ -38,4 +38,13 @@ public class UserService {
 
         return userMapper.toUserDTO(user.get());
     }
+
+    public List<UserDTO> getUserByNameLike(String name) {
+        List<User> user = userRepo.findByNameContains(name);
+        if (user.isEmpty()) {
+            return null;
+        }
+
+        return userMapper.toUserDTOs(user);
+    }
 }

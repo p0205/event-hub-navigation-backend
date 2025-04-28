@@ -37,4 +37,13 @@ public class UserController {
         }
         return ResponseEntity.ok(user);
     }
+
+    @GetMapping("/name")
+    public ResponseEntity<List<UserDTO>> getUserByName(@RequestParam String name ) {
+        List<UserDTO> user = userService.getUserByNameLike(name);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
+    }
 }

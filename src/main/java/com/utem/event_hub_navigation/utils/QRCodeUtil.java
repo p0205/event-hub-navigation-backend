@@ -12,27 +12,30 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.utem.event_hub_navigation.dto.QRPayload;
 
 @Component
-public class QRCodeGenerator {
+public class QRCodeUtil {
 
     private static final String HMAC_ALGO = "HmacSHA256";
 
     private final byte[] secretKeyBytes;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public QRCodeGenerator(@Value("${attendance.qr.secretKey}") String secretKey) {
+    public QRCodeUtil(@Value("${attendance.qr.secretKey}") String secretKey) {
         this.secretKeyBytes = Base64.getUrlDecoder().decode(secretKey);
     }
 
     public String createPayload(int eventId,
-                                int eventVenueId,
-                                LocalDateTime expiresAt) throws Exception {
+            int eventVenueId,
+            LocalDateTime expiresAt) throws Exception {
         // 1) Format expiresAt to ISO string
         String expires = expiresAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
@@ -43,7 +46,7 @@ public class QRCodeGenerator {
         Mac mac = Mac.getInstance(HMAC_ALGO);
         mac.init(new SecretKeySpec(secretKeyBytes, HMAC_ALGO));
         String sig = Base64.getUrlEncoder().withoutPadding()
-                           .encodeToString(mac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8)));
+                .encodeToString(mac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8)));
 
         // 4) Build payload object
         QRPayload p = new QRPayload(eventId, eventVenueId, expires, sig);
@@ -51,7 +54,7 @@ public class QRCodeGenerator {
         // 5) Serialize to JSON and Base64-encode
         String json = mapper.writeValueAsString(p);
         return Base64.getUrlEncoder().withoutPadding()
-                     .encodeToString(json.getBytes(StandardCharsets.UTF_8));
+                .encodeToString(json.getBytes(StandardCharsets.UTF_8));
     }
 
     public byte[] generateQRCodeImage(String payload, int width, int height) throws Exception {
@@ -63,17 +66,30 @@ public class QRCodeGenerator {
         }
     }
 
-    // Simple DTO
-    public static class QRPayload {
-        public int eventId;
-        public int eventVenueId;
-        public String expiresAt;
-        public String sig;
-        public QRPayload(int eventId, int eventVenueId, String expiresAt, String sig) {
-            this.eventId = eventId;
-            this.eventVenueId = eventVenueId;
-            this.expiresAt = expiresAt;
-            this.sig = sig;
+    public QRPayload validateQRCode(String encodedPayload) throws Exception {
+        // Decode and parse QR payload
+        byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPayload);
+        String json = new String(decodedBytes, StandardCharsets.UTF_8);
+        QRPayload payload = new ObjectMapper().readValue(json, QRPayload.class);
+
+        // Validate signature
+        String toSign = payload.eventId + "|" + payload.eventVenueId + "|" + payload.expiresAt;
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec(secretKeyBytes, "HmacSHA256"));
+        String expectedSig = Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(toSign.getBytes()));
+        if (!expectedSig.equals(payload.sig)) {
+            throw new IllegalArgumentException("Invalid QR signature.");
         }
+
+        // Validate expiration
+        LocalDateTime expires = LocalDateTime.parse(payload.expiresAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        if (expires.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("QR code expired.");
+        }
+
+        // Example: Save check-in record to DB
+        // attendanceRepository.save(new AttendanceRecord(participantId, payload.eventVenueId, LocalDateTime.now()));
+
+        return payload;
     }
 }

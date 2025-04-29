@@ -4,8 +4,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.model.Attendance;
+import com.utem.event_hub_navigation.model.EventVenue;
+import com.utem.event_hub_navigation.model.Registration;
 
 @Repository
 public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
-    boolean existsByRegistrationId(Integer registrationId);
+    boolean existsByEventVenueAndRegistration(EventVenue eventVenue, Registration registration);
 }

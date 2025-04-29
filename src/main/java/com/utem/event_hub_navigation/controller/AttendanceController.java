@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.controller;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
@@ -10,11 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.utem.event_hub_navigation.model.EventVenue;
+import com.utem.event_hub_navigation.dto.CheckInRequest;
+import com.utem.event_hub_navigation.dto.QRPayload;
 import com.utem.event_hub_navigation.service.AttendanceService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -29,6 +33,8 @@ public class AttendanceController {
     public AttendanceController(AttendanceService attendanceService) {
         this.attendanceService = attendanceService;
     }
+
+    
 
     // @PostMapping("/mark")
     // public ResponseEntity<String> markAttendance(@RequestBody AttendanceRequest
@@ -90,5 +96,20 @@ public class AttendanceController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
+    //TODO: Get participantId from authcontext
+    @PostMapping("/check_in")
+    public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
+        try {
+            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(), checkInRequest.getParticipantId());
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
 
 }

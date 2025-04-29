@@ -205,8 +205,6 @@ public class EventService {
         if (updatedEvent.getStatus() != null)
             existingEvent.setStatus(updatedEvent.getStatus());
 
-        if (updatedEvent.getQrCodePath() != null)
-            existingEvent.setQrCodePath(updatedEvent.getQrCodePath());
 
         if (updatedEvent.getSupportingDocument() != null)
             existingEvent.setSupportingDocument(updatedEvent.getSupportingDocument());

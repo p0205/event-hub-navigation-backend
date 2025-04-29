@@ -60,8 +60,6 @@ public class Event {
     @CreatedDate
     private LocalDate createdAt;
 
-    @Nullable
-    private String qrCodePath;
 
     @Nullable
     @OneToOne(cascade = CascadeType.PERSIST) // Add cascade here

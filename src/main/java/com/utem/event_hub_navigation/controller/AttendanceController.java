@@ -2,6 +2,7 @@ package com.utem.event_hub_navigation.controller;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.dto.CheckInRequest;
 import com.utem.event_hub_navigation.dto.QRPayload;
+import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.service.AttendanceService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -34,8 +36,6 @@ public class AttendanceController {
         this.attendanceService = attendanceService;
     }
 
-    
-
     // @PostMapping("/mark")
     // public ResponseEntity<String> markAttendance(@RequestBody AttendanceRequest
     // request) {
@@ -45,7 +45,8 @@ public class AttendanceController {
     // }
 
     @GetMapping(value = "/qr_download", produces = MediaType.IMAGE_PNG_VALUE)
-    public ResponseEntity<byte[]> downloadQRCode(@PathVariable("eventId") Integer eventId, @PathVariable("eventVenueId") Integer eventVenueId) {
+    public ResponseEntity<byte[]> downloadQRCode(@PathVariable("eventId") Integer eventId,
+            @PathVariable("eventVenueId") Integer eventVenueId) {
         try {
 
             byte[] image = attendanceService.downloadQRCode(eventVenueId); // Assuming you stored QR as byte[]
@@ -65,22 +66,22 @@ public class AttendanceController {
         }
     }
 
-     /**
+    /**
      * Generate a QR code with a custom expiration date.
      * 
      * @param sessionId The session ID.
-     * @param eventId The event ID.
+     * @param eventId   The event ID.
      * @param expiresAt The expiration date-time in ISO 8601 format.
      * @return The PNG byte array for the QR code.
      */
 
     @GetMapping(value = "/qr_generate", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQRCode(
-                            @PathVariable("eventId") Integer eventId, 
-                            @PathVariable("eventVenueId") Integer eventVenueId,
-                            @RequestParam(required = false) LocalDateTime expiresAt ) {
+            @PathVariable("eventId") Integer eventId,
+            @PathVariable("eventVenueId") Integer eventVenueId,
+            @RequestParam(required = false) LocalDateTime expiresAt) {
         try {
-            byte[] qrCode = attendanceService.generateAndSaveQRCode(eventId, eventVenueId,expiresAt );
+            byte[] qrCode = attendanceService.generateAndSaveQRCode(eventId, eventVenueId, expiresAt);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.IMAGE_PNG);
@@ -97,12 +98,11 @@ public class AttendanceController {
         }
     }
 
-
-    //TODO: Get participantId from authcontext
     @PostMapping("/check_in")
     public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
         try {
-            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(), checkInRequest.getParticipantId());
+            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
+                    checkInRequest.getParticipantId());
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -111,5 +111,15 @@ public class AttendanceController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<?> getCheckInParticipants(@PathVariable("eventVenueId") Integer eventVenueId) {
+        try {
+            return ResponseEntity.ok(attendanceService.getCheckInParticipants(eventVenueId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
 
 }

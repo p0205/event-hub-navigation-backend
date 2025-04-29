@@ -7,6 +7,9 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
@@ -23,8 +26,9 @@ import lombok.NoArgsConstructor;
 public class EventVenue {
 
    
-    @EmbeddedId
-    private EventVenueKey id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     private String sessionName;
     private LocalDateTime startDateTime;
@@ -32,16 +36,14 @@ public class EventVenue {
 
     // Add this: link back to Event
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("eventId") // maps the eventId part of the embedded ID
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "event_id",nullable = false)
     @JsonBackReference
     private Event event;
 
-    // Optionally, add venue relationship if applicable
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("venueId") // maps the venueId part of the embedded ID
-    @JoinColumn(name = "venue_id")
-    private Venue venue; // assuming you have a Venue entity
+    @JoinColumn(name = "venue_id",nullable = false)
+    private Venue venue; 
 
 
 }

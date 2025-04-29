@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,13 @@ public class BudgetCategoryService {
 
     public List<BudgetCategory> getAllBudgetCategories(){
         return budgetCategoryRepo.findAll();
+    }
+
+    public BudgetCategory getBudgetCategoryById(Integer id) {
+        Optional<BudgetCategory> optional = budgetCategoryRepo.findById(id);
+        if(optional.isEmpty())
+            return null;
+        return optional.get();
     }
 
    

@@ -38,7 +38,6 @@ import com.utem.event_hub_navigation.model.EventBudget;
 import com.utem.event_hub_navigation.model.EventBudgetKey;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.model.EventVenue;
-import com.utem.event_hub_navigation.model.EventVenueKey;
 import com.utem.event_hub_navigation.model.Registration;
 import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.EventRepo;
@@ -89,10 +88,6 @@ public class EventService {
         }
         for (EventVenue venue : event.getEventVenues()) {
             venue.setEvent(event);
-            EventVenueKey key = new EventVenueKey();
-            key.setEventId(event.getId()); // must not be null at this point
-            key.setVenueId(venue.getVenue().getId());
-            venue.setId(key);
         }
         return eventMapper.tDto(eventRepo.save(event));
     }

@@ -39,6 +39,15 @@ public class BudgetCategoryController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<BudgetCategory> getBudgetCategoryById(@PathVariable Integer id){
+        BudgetCategory budgetCategory = budgetCategoryService.getBudgetCategoryById(id);
+        if(budgetCategory == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(budgetCategory, HttpStatus.OK);
+    }
+
+
     @GetMapping
     public ResponseEntity<List<BudgetCategory>> getAllBudgetCategories() {
         List<BudgetCategory> budgetCategories = budgetCategoryService.getAllBudgetCategories();

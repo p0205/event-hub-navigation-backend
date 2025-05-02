@@ -12,8 +12,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -34,13 +32,13 @@ public class QRCodeUtil {
     }
 
     public String createPayload(int eventId,
-            int eventVenueId,
+            int sessionId,
             LocalDateTime expiresAt) throws Exception {
         // 1) Format expiresAt to ISO string
         String expires = expiresAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
         // 2) Build the string to sign
-        String dataToSign = eventId + "|" + eventVenueId + "|" + expires;
+        String dataToSign = eventId + "|" + sessionId + "|" + expires;
 
         // 3) Compute HMAC_SHA256
         Mac mac = Mac.getInstance(HMAC_ALGO);
@@ -49,7 +47,7 @@ public class QRCodeUtil {
                 .encodeToString(mac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8)));
 
         // 4) Build payload object
-        QRPayload p = new QRPayload(eventId, eventVenueId, expires, sig);
+        QRPayload p = new QRPayload(eventId, sessionId, expires, sig);
 
         // 5) Serialize to JSON and Base64-encode
         String json = mapper.writeValueAsString(p);
@@ -73,7 +71,7 @@ public class QRCodeUtil {
         QRPayload payload = new ObjectMapper().readValue(json, QRPayload.class);
 
         // Validate signature
-        String toSign = payload.eventId + "|" + payload.eventVenueId + "|" + payload.expiresAt;
+        String toSign = payload.eventId + "|" + payload.sessionId + "|" + payload.expiresAt;
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secretKeyBytes, "HmacSHA256"));
         String expectedSig = Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(toSign.getBytes()));
@@ -88,7 +86,7 @@ public class QRCodeUtil {
         }
 
         // Example: Save check-in record to DB
-        // attendanceRepository.save(new AttendanceRecord(participantId, payload.eventVenueId, LocalDateTime.now()));
+        // attendanceRepository.save(new AttendanceRecord(participantId, payload.sessionId, LocalDateTime.now()));
 
         return payload;
     }

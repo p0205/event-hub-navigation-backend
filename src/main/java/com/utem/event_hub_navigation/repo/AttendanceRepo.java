@@ -8,13 +8,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.model.Attendance;
-import com.utem.event_hub_navigation.model.EventVenue;
+import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.Registration;
-import com.utem.event_hub_navigation.model.User;
 
 @Repository
 public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
-    boolean existsByEventVenueAndRegistration(EventVenue eventVenue, Registration registration);
+    boolean existsBysessionAndRegistration(Session session, Registration registration);
 
     @Query(
         value = """
@@ -22,8 +21,8 @@ public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
             FROM attendance a
             JOIN registration r ON a.registration_id = r.id
             JOIN users u ON r.user_id = u.id
-            WHERE a.event_venue_id = :eventVenueId
+            WHERE a.event_venue_id = :sessionId
         """,
         nativeQuery = true
     )
-    List<Object[]> findCheckInParticipantsByEventVenue(@Param("eventVenueId") Integer eventVenueId);}
+    List<Object[]> findCheckInParticipantsBysession(@Param("sessionId") Integer sessionId);}

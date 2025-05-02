@@ -31,10 +31,10 @@ public class Attendance {
 
     // Add this: link back to Event
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)    
-    @MapsId("eventVenueId") // maps the sessionId part of the embedded ID
-    @JoinColumn(name = "event_venue_id")
+    @MapsId("sessionId") // maps the sessionId part of the embedded ID
+    @JoinColumn(name = "session_id")
     @JsonBackReference
-    private EventVenue eventVenue;
+    private Session session;
 
     // Optionally, add venue relationship if applicable
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

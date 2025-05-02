@@ -1,0 +1,488 @@
+package com.utem.event_hub_navigation.service.impl;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.utem.event_hub_navigation.dto.EventBudgetDTO;
+import com.utem.event_hub_navigation.dto.EventDTO;
+import com.utem.event_hub_navigation.dto.EventResponseByStatus;
+import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.SessionDTO;
+import com.utem.event_hub_navigation.dto.UserDTO;
+import com.utem.event_hub_navigation.mapper.EventMapper;
+import com.utem.event_hub_navigation.mapper.UserMapper;
+import com.utem.event_hub_navigation.model.BudgetCategory;
+import com.utem.event_hub_navigation.model.Document;
+import com.utem.event_hub_navigation.model.Event;
+import com.utem.event_hub_navigation.model.EventBudget;
+import com.utem.event_hub_navigation.model.EventBudgetKey;
+import com.utem.event_hub_navigation.model.EventStatus;
+import com.utem.event_hub_navigation.model.Session;
+import com.utem.event_hub_navigation.model.SessionVenue;
+import com.utem.event_hub_navigation.model.SessionVenueKey;
+import com.utem.event_hub_navigation.model.Registration;
+import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Venue;
+import com.utem.event_hub_navigation.repo.EventRepo;
+import com.utem.event_hub_navigation.repo.SessionRepo;
+import com.utem.event_hub_navigation.repo.RegistrationRepo;
+import com.utem.event_hub_navigation.repo.UserRepo;
+import com.utem.event_hub_navigation.repo.VenueRepo;
+import com.utem.event_hub_navigation.service.BudgetCategoryService;
+import com.utem.event_hub_navigation.service.EventService;
+import com.utem.event_hub_navigation.service.VenueService;
+import com.utem.event_hub_navigation.utils.JsonParserUtil;
+import com.utem.event_hub_navigation.utils.NumberParserUtil;
+
+import jakarta.persistence.EntityNotFoundException;
+
+@Service
+public class EventServiceImpl implements EventService {
+
+    // CRUD
+    private EventRepo eventRepo;
+
+    private UserRepo userRepo;
+
+    private EventMapper eventMapper;
+
+    private UserMapper userMapper;
+
+    private RegistrationRepo registrationRepo;
+
+    private SessionRepo sessionRepo;
+
+    private VenueService venueService;
+
+    private BudgetCategoryService budgetCategoryService; 
+
+    @Autowired
+    public EventServiceImpl(EventRepo eventRepo, UserRepo userRepo, EventMapper eventMapper, UserMapper userMapper,
+            RegistrationRepo registrationRepo, SessionRepo sessionRepo,VenueService venueService, BudgetCategoryService budgetCategoryService) {
+        this.eventRepo = eventRepo;
+        this.userRepo = userRepo;
+        this.eventMapper = eventMapper;
+        this.userMapper = userMapper;
+        this.registrationRepo = registrationRepo;
+        this.sessionRepo = sessionRepo;
+        this.venueService = venueService;
+        this.budgetCategoryService = budgetCategoryService;
+    }
+
+    @Override
+    @Transactional
+    public EventDTO createEvent(EventDTO dto) {
+
+        System.out.println("HIHIHIHIH"+dto.getEventBudgets().toString());
+        Event event = eventMapper.toEntity(dto);
+        System.out.println("HIHIHIHIH"+dto.getEventBudgets().toString());
+        System.out.println(event.getEventBudgets().toString());
+        // 1. Set back-references
+        List<Session>  sessions = new ArrayList<>();
+        for (Session session : event.getSessions()) {
+            session.setEvent(event);
+
+            // 2. Manually build sessionVenues from DTO
+            SessionDTO sessionDTO = dto.getSessions().stream()
+                    .filter(s -> s.getSessionName().equals(session.getSessionName())) // assuming session name is unique
+                                                                                      // here
+                    .findFirst()
+                    .orElseThrow();
+
+            List<SessionVenue> sessionVenues = new ArrayList<>();
+            for (Venue venue : sessionDTO.getVenues()) {
+
+                 Venue managedVenue = venueService.getVenue(venue.getId());
+                 if(managedVenue.equals(null))
+                    throw new EntityNotFoundException("Venue not found with ID: " + venue.getId());
+                  
+
+                SessionVenueKey key = new SessionVenueKey();
+                key.setSessionId(session.getId()); // will be null now, updated after save
+                key.setVenueId(venue.getId());
+
+                SessionVenue sv = new SessionVenue();
+                sv.setVenue(managedVenue);
+                sv.setSession(session);
+                sv.setId(key);
+
+                sessionVenues.add(sv);
+            }
+
+            session.setSessionVenues(sessionVenues);
+            sessions.add(session);
+        }
+        
+        event.setSessions(sessions);
+
+        // 3. Handle budgets
+        for (EventBudget budget : event.getEventBudgets()) {
+            System.out.println(budget.toString());
+            
+            EventBudgetKey key = new EventBudgetKey();
+            key.setBudgetId(budget.getId().getBudgetId());
+            key.setEventId(event.getId());
+
+            BudgetCategory category = budgetCategoryService.getBudgetCategoryById(budget.getId().getBudgetId());
+            
+            // key.setEventId() will be set after save
+            budget.setId(key);
+            budget.setEvent(event);
+            budget.setBudgetCategory(category);
+            // System.out.println("BUDGET T:" +budget.toString());
+        }
+        return eventMapper.toDto(eventRepo.save(event)); // save again if budget ID needed
+    }
+
+    @Override
+    public EventDTO prepareAndValidateEvent(
+            String name,
+            String description,
+            String organizerIdString,
+            String participantsNoString,
+            String sessionsJson,
+            String eventBudgetsJson,
+            MultipartFile supportingDocument) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        Integer organizerId = NumberParserUtil.parseInteger(organizerIdString, "organizer ID");
+        Integer participantsNo = NumberParserUtil.parseInteger(participantsNoString, "participants number");
+
+        if (participantsNo == null || participantsNo <= 0) {
+            throw new IllegalArgumentException("Participants number must be a positive number.");
+        }
+
+        List<SessionDTO> venues = JsonParserUtil.parseJson(sessionsJson, new TypeReference<>() {
+        });
+        System.out.println(sessionsJson.toString());
+        System.out.println(venues.toString());
+        List<EventBudgetDTO> budgets = JsonParserUtil.parseJson(eventBudgetsJson, new TypeReference<>() {
+        });
+
+        EventDTO dto = new EventDTO();
+        dto.setName(name);
+        dto.setDescription(description);
+        dto.setOrganizerId(organizerId);
+        dto.setParticipantsNo(participantsNo);
+        dto.setSessions(venues);
+        dto.setEventBudgets(budgets);
+
+        if (supportingDocument != null && !supportingDocument.isEmpty()) {
+            try {
+                Document doc = Document.builder()
+                        .filename(supportingDocument.getOriginalFilename())
+                        .fileType(supportingDocument.getContentType())
+                        .data(supportingDocument.getBytes())
+                        .build();
+                dto.setSupportingDocument(doc);
+            } catch (IOException e) {
+                throw new RuntimeException("Error reading uploaded file", e);
+            }
+        }
+
+        dto.setStatus(EventStatus.PENDING);
+        return dto;
+    }
+
+    // private Integer parseInteger(String value, String fieldName) {
+    // if (value == null || value.trim().isEmpty()) return null;
+    // try {
+    // return Integer.parseInt(value.trim());
+    // } catch (NumberFormatException e) {
+    // throw new IllegalArgumentException("Invalid number format for " + fieldName +
+    // ": " + value);
+    // }
+    // }
+
+    @Override
+    public String getEventName(Integer eventId) {
+        return eventRepo.findNameById(eventId);
+    }
+
+    @Override
+    public List<EventDTO> getAllPendingEvents() {
+        return eventMapper.toEventDTOs(eventRepo.findByStatus(EventStatus.PENDING));
+    }
+
+    @Override
+    public List<EventDTO> getAllActiveEvents() {
+        return eventMapper.toEventDTOs(eventRepo.findByStatus(EventStatus.ACTIVE));
+    }
+
+    @Override
+    public List<EventDTO> getAllCompletedEvents() {
+        return eventMapper.toEventDTOs(eventRepo.findByStatus(EventStatus.COMPLETED));
+    }
+
+    @Override
+    public Event updateEvent(Integer eventId, EventDTO updatedEvent, Integer organizerId) {
+        // Find the existing event
+        Event existingEvent = eventRepo.findById(eventId)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + eventId));
+
+        // Fetch the new organizer User if organizerId is provided
+        // User newOrganizer = null;
+        // if (organizerId != null) {
+        // newOrganizer = userRepository.findById(organizerId)
+        // .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "New Organizer User
+        // not found with ID: " + organizerId));
+        // }
+
+        // Update fields from eventDetails
+
+        if (updatedEvent.getName() != null)
+            existingEvent.setName(updatedEvent.getName());
+
+        if (updatedEvent.getDescription() != null)
+            existingEvent.setDescription(updatedEvent.getDescription());
+
+        if (updatedEvent.getStatus() != null)
+            existingEvent.setStatus(updatedEvent.getStatus());
+
+        if (updatedEvent.getSupportingDocument() != null)
+            existingEvent.setSupportingDocument(updatedEvent.getSupportingDocument());
+
+        if (updatedEvent.getParticipantsNo() != null)
+            existingEvent.setParticipantsNo(updatedEvent.getParticipantsNo());
+
+        // Update the organizer only if a new organizerId was provided
+        // if (newOrganizer != null) {
+        // existingEvent.setEventOrganizer(newOrganizer);
+        // }
+        // Note: createdAt should not be updated
+
+        // Save the updated event
+        return eventRepo.save(existingEvent);
+    }
+
+    @Override
+    public EventDTO getEventById(Integer id) {
+        Optional<Event> optionalEvent = eventRepo.findById(id);
+
+        return eventMapper.toDto(optionalEvent.get());
+
+    }
+
+    @Override
+    public List<Event> getAllEvents() {
+        return eventRepo.findAll();
+    }
+
+    @Override
+    public List<Event> getEventsByOrganizer(Integer organizerId) {
+        User organizer = userRepo.findById(organizerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Organizer User not found with ID: " + organizerId));
+
+        return eventRepo.findByOrganizerOrderByStartDateTimeDesc(organizer);
+    }
+
+    @Override
+    public EventResponseByStatus getEventsByOrganizerGroupedByStatus(Integer organizerId) {
+        List<Event> allEvents = getEventsByOrganizer(organizerId);
+
+        List<EventSimpleResponse> pendingEvents = new ArrayList<>();
+
+        List<EventSimpleResponse> activeEvents = new ArrayList<>();
+        List<EventSimpleResponse> completedEvents = new ArrayList<>();
+
+        for (Event event : allEvents) {
+            EventSimpleResponse eventSimpleResponse = EventSimpleResponse.builder()
+                    .id(event.getId())
+                    .name(event.getName())
+                    .startDateTime(event.getStartDateTime())
+                    .status(event.getStatus())
+                    .createdAt(event.getCreatedAt())
+                    .build();
+
+            if (event.getStatus() == EventStatus.PENDING) {
+                pendingEvents.add(eventSimpleResponse);
+            } else if (event.getStatus() == EventStatus.ACTIVE) {
+                activeEvents.add(eventSimpleResponse);
+            } else if (event.getStatus() == EventStatus.COMPLETED) {
+                completedEvents.add(eventSimpleResponse);
+            }
+        }
+
+        return EventResponseByStatus.builder()
+                .pendingEvents(pendingEvents)
+                .activeEvents(activeEvents)
+                .completedEvents(completedEvents)
+
+                .build();
+    }
+
+    @Override
+    public List<EventSimpleResponse> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status) {
+        User organizer = userRepo.findById(organizerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Organizer User not found with ID: " + organizerId));
+
+        List<Event> events = eventRepo.findByOrganizerAndStatusOrderByStartDateTimeAsc(organizer, status);
+        List<EventSimpleResponse> eventSimpleResponses = new ArrayList<>();
+        for (Event event : events) {
+            EventSimpleResponse eventSimpleResponse = EventSimpleResponse.builder()
+                    .id(event.getId())
+                    .name(event.getName())
+                    .startDateTime(event.getStartDateTime())
+                    .status(event.getStatus())
+                    .createdAt(event.getCreatedAt())
+                    .build();
+            eventSimpleResponses.add(eventSimpleResponse);
+        }
+        return eventSimpleResponses;
+    }
+
+    // public List<Event> getEventsByDate(LocalDate date) {
+
+    // return eventRepo.findByEventDate(date);
+    // }
+
+    @Override
+    public boolean deleteEvent(Integer id) {
+        if (eventRepo.existsById(id)) {
+            eventRepo.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public List<Session> getSessionsByEvent(Integer eventId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        return sessionRepo.findByEvent(event);
+    }
+
+    @Override
+    public List<UserDTO> getParticipantsInfoFromFile(MultipartFile file) {
+        try (InputStream is = file.getInputStream(); Workbook workbook = WorkbookFactory.create(is)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<String> emails = new ArrayList<>();
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0)
+                    continue; // Skip header row
+                Cell emailCell = row.getCell(0); // Assumes email is in column 0
+                if (emailCell != null) {
+                    // emailCell.setCellType(CellType.STRING);
+                    String email = emailCell.getStringCellValue().trim();
+                    if (!email.isEmpty())
+                        emails.add(email);
+                }
+            }
+
+            // Query the database for users by email
+            List<User> users = userRepo.findByEmailIn(emails);
+
+            // Format response
+            List<UserDTO> result = users.stream().map(user -> {
+                UserDTO userdto = userMapper.toUserDTO(user);
+                return userdto;
+            }).collect(Collectors.toList());
+
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing file", e);
+
+        }
+    }
+
+    @Override
+    public List<UserDTO> importParticipants(Integer eventId, List<UserDTO> participants) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        List<UserDTO> results = new ArrayList<>();
+        for (UserDTO dto : participants) {
+            Optional<User> optionalUser = userRepo.findByEmail(dto.getEmail());
+
+            User user;
+
+            if (optionalUser.isPresent()) {
+                user = optionalUser.get();
+            } else {
+                continue;
+                // Optional: Create new user if not exists
+                // user = new User();
+                // user.setEmail(dto.getEmail());
+                // user.setName(dto.getName());
+                // user.setFaculty(dto.getFaculty());
+                // user.setCreatedAt(LocalDateTime.now());
+                // user = userRepository.save(user);
+                // isNewUser = true;
+            }
+
+            // Check if already registered
+            boolean alreadyRegistered = registrationRepo.existsByEventAndParticipant(event, user);
+            if (!alreadyRegistered) {
+                Registration registration = Registration.builder()
+                        .event(event)
+                        .participant(user)
+                        .checkinDateTime(null)
+                        .register_date(LocalDate.now())
+                        .build();
+
+                registrationRepo.save(registration);
+            }
+
+            // Add result info (for optional UI summary)
+            results.add(userMapper.toUserDTO(user));
+        }
+
+        return results;
+
+    }
+
+    @Override
+    public List<UserDTO> getParticipantsByEventId(Integer eventId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        List<Registration> registrations = registrationRepo.findByEvent(event);
+
+        List<UserDTO> participants = registrations.stream()
+                .map(registration -> userMapper.toUserDTO(registration.getParticipant()))
+                .collect(Collectors.toList());
+
+        return participants;
+    }
+
+    @Override
+    public boolean removeParticipant(Integer eventId, Integer participantId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        User participant = userRepo.findById(participantId)
+                .orElseThrow(() -> new RuntimeException("Participant not found"));
+
+        Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
+        registrationRepo.delete(registration);
+        return true;
+    }
+}

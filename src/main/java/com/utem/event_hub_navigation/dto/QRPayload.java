@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class QRPayload {
     public int eventId;
-    public int eventVenueId;
+    public int sessionId;
     public String expiresAt;
     public String sig;
 }

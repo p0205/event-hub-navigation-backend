@@ -12,6 +12,6 @@ public interface EventBudgetMapper {
     @Mapping(source = "id.budgetId", target = "budgetCategoryId")
     EventBudgetDTO toDto(EventBudget entity);
 
-    @Mapping(source = "budgetCategoryId", target = "budgetCategory", qualifiedByName = "mapCategory")
+    @Mapping(source = "budgetCategoryId", target = "id.budgetId")
     EventBudget toEntity(EventBudgetDTO dto);
 }

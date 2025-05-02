@@ -10,12 +10,12 @@ import com.utem.event_hub_navigation.model.Event;
 
 @Mapper(
     componentModel = "spring",
-    uses = {EventMapperHelper.class, EventVenueMapper.class, EventBudgetMapper.class}
+    uses = {EventMapperHelper.class, EventBudgetMapper.class, SessionMapper.class}
 )
 public interface EventMapper {
 
     @Mapping(source = "organizer.id", target = "organizerId")
-    EventDTO tDto(Event event);
+    EventDTO toDto(Event event);
 
     @Mapping(source = "organizerId", target = "organizer", qualifiedByName = "mapUser")
     Event toEntity(EventDTO dto);

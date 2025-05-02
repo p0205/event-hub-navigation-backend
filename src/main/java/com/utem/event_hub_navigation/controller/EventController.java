@@ -52,15 +52,13 @@ public class EventController {
             @RequestPart("name") String name,
             @RequestPart("description") String description,
             @RequestPart("organizerId") String organizerIdString,
-            @RequestPart("startDateTime") String startDateTime,
-            @RequestPart("endDateTime") String endDateTime,
             @RequestPart("participantsNo") String participantsNoString,
-            @RequestPart("eventVenues") String eventVenuesJson,
+            @RequestPart("sessions") String sessionsJson,
             @RequestPart("eventBudgets") String eventBudgetsJson,
             @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
-                name, description, organizerIdString, startDateTime, endDateTime,
-                participantsNoString, eventVenuesJson, eventBudgetsJson, supportingDocument);
+                name, description, organizerIdString,
+                participantsNoString, sessionsJson, eventBudgetsJson,supportingDocument);
 
         EventDTO savedEvent = eventService.createEvent(dto);
 
@@ -180,6 +178,15 @@ public class EventController {
 
         EventResponseByStatus events = eventService.getEventsByOrganizerGroupedByStatus(organizerId);
         return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/{eventId}/sessions")
+    public ResponseEntity<?> getSessionsByEvent(@PathVariable("eventId") Integer eventId) {
+        try {
+            return ResponseEntity.ok(eventService.getSessionsByEvent(eventId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @PostMapping("/{eventId}/participants/getInfo")

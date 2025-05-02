@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -31,6 +32,7 @@ public class EventBudget {
     @MapsId("eventId") // maps the eventId part of the embedded ID
     @JoinColumn(name = "event_id")
     @JsonBackReference
+     @ToString.Exclude
     private Event event;
 
     // Optionally, add venue relationship if applicable

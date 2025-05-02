@@ -2,36 +2,16 @@ package com.utem.event_hub_navigation.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.utem.event_hub_navigation.model.Venue;
-import com.utem.event_hub_navigation.repo.VenueRepo;
 
-@Service
-public class VenueService {
+public interface VenueService {
 
-    private final VenueRepo venueRepo;
+    void addVenues(Venue venue);
 
-    @Autowired
-    public VenueService(VenueRepo venueRepo) {
-        this.venueRepo = venueRepo;
-    }
+    Venue getVenue(Integer venueId);
 
-    public void addVenues(Venue venue) {
-        venueRepo.save(venue);
-    }
+    List<Venue> getAllVenues();
 
-    public Venue getVenue(Integer venueId) {
-        return venueRepo.findById(venueId).orElse(null);
-    }
-
-    public List<Venue> getAllVenues() {
-        return venueRepo.findAll();
-    }
-    public void deleteVenues(Integer venueId) {
-        venueRepo.deleteById(venueId);
-    }
-
+    void deleteVenues(Integer venueId);
 
 }

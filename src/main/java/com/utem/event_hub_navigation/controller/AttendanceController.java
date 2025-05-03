@@ -39,6 +39,7 @@ public class AttendanceController {
     // return ResponseEntity.ok(response);
     // }
 
+    
     @GetMapping(value = "/qr_download", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> downloadQRCode(@PathVariable("eventId") Integer eventId,
             @PathVariable("sessionId") Integer sessionId) {

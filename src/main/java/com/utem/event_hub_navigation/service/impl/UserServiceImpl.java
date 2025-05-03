@@ -2,6 +2,7 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,6 @@ import com.utem.event_hub_navigation.mapper.UserMapper;
 import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.UserRepo;
 import com.utem.event_hub_navigation.service.UserService;
-
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
 
         List<User> users = userRepo.findByEmailIn(emails);
         return userMapper.toUserDTOs(users);
-}
+    }
 
     @Override
     public UserDTO getUserByEmail(String email) {
@@ -50,5 +50,18 @@ public class UserServiceImpl implements UserService {
         }
 
         return userMapper.toUserDTOs(user);
+    }
+
+    @Override
+    public List<UserDTO> findByEmailOrName(String query) {
+
+        List<User> users = userRepo.findByNameContains(query);
+        if (users.isEmpty()) {
+            users = userRepo.findByEmailContains(query);
+            if (users.isEmpty()) {
+                return null;
+            }
+        }
+        return userMapper.toUserDTOs(users);
     }
 }

@@ -60,7 +60,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         Session session = sessionRepo.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found with ID: " + sessionId));
 
-        // If QR code already exists, reuse (optional)
+        // If QR code already exists, reuse 
         if (session.getQrCodeImage() != null) {
             return session.getQrCodeImage();
         }

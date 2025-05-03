@@ -12,4 +12,6 @@ public interface UserService {
 
     List<UserDTO> getUserByNameLike(String name);
 
+    public List<UserDTO> findByEmailOrName(String query);
+
 }

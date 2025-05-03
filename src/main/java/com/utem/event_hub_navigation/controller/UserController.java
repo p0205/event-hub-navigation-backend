@@ -1,6 +1,8 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,5 +47,18 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/name_or_email")
+    public ResponseEntity<List<UserDTO>> searchUsers(
+            @RequestParam String query) {
+
+        List<UserDTO> users = userService.findByEmailOrName(query);
+
+        if (users == null || users.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(users);
     }
 }

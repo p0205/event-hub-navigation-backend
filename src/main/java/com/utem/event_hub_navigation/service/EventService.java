@@ -35,7 +35,9 @@ public interface EventService {
 
     Event updateEvent(Integer eventId, EventDTO updatedEvent, Integer organizerId);
 
-    EventDTO getEventById(Integer id);
+    EventDTO getEventDTOById(Integer id);
+
+    Event getEventById(Integer id);
 
     List<Event> getAllEvents();
 

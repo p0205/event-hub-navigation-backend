@@ -2,7 +2,6 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -63,5 +62,14 @@ public class UserServiceImpl implements UserService {
             }
         }
         return userMapper.toUserDTOs(users);
+    }
+
+    @Override
+    public User getUserById(Integer userId){
+        Optional<User> user = userRepo.findById(userId);
+        if (user.isEmpty()) {
+            return null;
+        }
+        return user.get();
     }
 }

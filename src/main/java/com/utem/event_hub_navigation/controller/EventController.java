@@ -103,9 +103,9 @@ public class EventController {
     public ResponseEntity<EventDTO> getEventById(@PathVariable Integer id) {
         // The fetched event will include the associated organizer (potentially lazily
         // loaded)
-        EventDTO event = eventService.getEventById(id);
+        EventDTO event = eventService.getEventDTOById(id);
         if (event != null)
-            return ResponseEntity.ok(eventService.getEventById(id));
+            return ResponseEntity.ok(eventService.getEventDTOById(id));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 

@@ -96,6 +96,29 @@ public class TeamServiceImpl implements TeamService {
         }
     }
 
+    @Override
+    public void removeTeamMember(Integer eventId, Integer userId) {
+        // Check if the event exists
+        Event event = eventService.getEventById(eventId);
+        if (event == null) {
+            throw new RuntimeException("Event not found");
+        }
+
+        // Check if the user exists
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // Remove team member from the event
+        TeamMemberKey teamMemberKey = TeamMemberKey.builder()
+                                                    .eventId(eventId)
+                                                    .userId(userId)
+                                                    .build();
+       
+        teamMemberRepo.deleteById(teamMemberKey);
+    }
+
     // Implement the methods here
 
 }

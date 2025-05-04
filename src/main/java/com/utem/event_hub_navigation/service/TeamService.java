@@ -13,4 +13,6 @@ public interface TeamService {
 
     public void addTeamMembers(Integer eventId, List<Integer> userId, Integer roleId)throws Exception;
 
+    public void removeTeamMember(Integer eventId, Integer userId);
+
 }

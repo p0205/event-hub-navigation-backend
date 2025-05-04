@@ -8,8 +8,9 @@ import org.springframework.data.repository.query.Param;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.model.TeamMember;
+import com.utem.event_hub_navigation.model.TeamMemberKey;
 
-public interface TeamMemberRepo extends JpaRepository<TeamMember, Integer> {
+public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey> {
     // Custom query methods can be added here if needed
     // For example, to find team members by event ID or user ID
     // List<TeamMember> findByEventId(Integer eventId);

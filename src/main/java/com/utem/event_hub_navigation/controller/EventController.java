@@ -180,6 +180,7 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
+    //Get sessions of an event
     @GetMapping("/{eventId}/sessions")
     public ResponseEntity<?> getSessionsByEvent(@PathVariable("eventId") Integer eventId) {
         try {
@@ -189,6 +190,7 @@ public class EventController {
         }
     }
 
+    //Import participants to get information but no insert to database yet
     @PostMapping("/{eventId}/participants/getInfo")
     public ResponseEntity<List<UserDTO>> importParticipants(
             // @PathVariable Long eventId,
@@ -198,6 +200,7 @@ public class EventController {
         return ResponseEntity.ok(participantList);
     }
 
+    //Add participants to event
     @PostMapping("/{eventId}/participants")
     public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId,
             @RequestBody List<UserDTO> participantList) {
@@ -206,12 +209,14 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredList);
     }
 
+    //Get participants by event
     @GetMapping("/{eventId}/participants")
     public ResponseEntity<List<UserDTO>> getParticipants(@PathVariable Integer eventId) {
         List<UserDTO> participants = eventService.getParticipantsByEventId(eventId);
         return ResponseEntity.ok(participants);
     }
 
+    //Delete Participants
     @DeleteMapping("/{eventId}/participants/{participantId}")
     public ResponseEntity<Void> removeParticipant(@PathVariable Integer eventId,
             @PathVariable Integer participantId) {
@@ -221,6 +226,18 @@ public class EventController {
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "Participant not found with ID: " + participantId + " in event ID: " + eventId);
+        }
+    }
+
+    //Get calender events to be displayed
+    @GetMapping("/calendar")
+    public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId){
+        try {
+            return ResponseEntity.ok(eventService.getCalendarEvent(userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
 

@@ -23,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
@@ -47,7 +48,6 @@ import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.SessionRepo;
 import com.utem.event_hub_navigation.repo.RegistrationRepo;
 import com.utem.event_hub_navigation.repo.UserRepo;
-import com.utem.event_hub_navigation.repo.VenueRepo;
 import com.utem.event_hub_navigation.service.BudgetCategoryService;
 import com.utem.event_hub_navigation.service.EventService;
 import com.utem.event_hub_navigation.service.VenueService;
@@ -495,5 +495,14 @@ public class EventServiceImpl implements EventService {
         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
         registrationRepo.delete(registration);
         return true;
+    }
+
+    @Override
+    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception{
+        try {
+            return eventRepo.findCalendarEntriesByOrganizerId(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
     }
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
@@ -58,5 +59,7 @@ public interface EventService {
     List<UserDTO> getParticipantsByEventId(Integer eventId);
 
     boolean removeParticipant(Integer eventId, Integer participantId);
+
+    List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception;
 
 }

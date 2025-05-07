@@ -39,4 +39,9 @@ public class EventMediaService {
     public List<EventMedia> getMediaByEventId(Integer eventId) {
         return eventMediaRepo.findByEventId(eventId);
     }
+
+    public void deleteEventMedia(Integer mediaId){
+        eventMediaRepo.deleteById(mediaId);
+    }
 }
+

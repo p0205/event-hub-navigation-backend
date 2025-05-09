@@ -15,14 +15,15 @@ import com.utem.event_hub_navigation.model.Registration;
 public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
     boolean existsBysessionAndRegistration(Session session, Registration registration);
 
-    @Query(
-        value = """
-            SELECT u.id, u.name, u.email,u.phone_no,u.gender,u.faculty,u.course,u.year,u.role
-            FROM attendance a
-            JOIN registration r ON a.registration_id = r.id
-            JOIN users u ON r.user_id = u.id
-            WHERE a.event_venue_id = :sessionId
-        """,
-        nativeQuery = true
-    )
-    List<Object[]> findCheckInParticipantsBysession(@Param("sessionId") Integer sessionId);}
+    @Query(value = """
+                SELECT u.id, u.name, u.email,u.phone_no,u.gender,u.faculty,u.course,u.year,u.role
+                FROM attendance a
+                JOIN registration r ON a.registration_id = r.id
+                JOIN users u ON r.user_id = u.id
+                WHERE a.session_id = :sessionId
+            """, nativeQuery = true)
+    List<Object[]> findCheckInParticipantsBysession(@Param("sessionId") Integer sessionId);
+
+    @Query("SELECT count(a) FROM Attendance a JOIN a.session s WHERE s.id = :sessionId")
+    int countBySessionId(Integer sessionId);
+}

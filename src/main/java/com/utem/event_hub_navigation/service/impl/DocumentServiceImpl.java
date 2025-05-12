@@ -17,41 +17,39 @@ public class DocumentServiceImpl implements DocumentService {
     @Autowired
     private DocumentRepo documentRepo;
 
-
-     @Override
+    @Override
     public Document storeFile(MultipartFile file) {
         // Normalize file name
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String originalFilename = file.getOriginalFilename();
+        String fileName = (originalFilename != null) ? StringUtils.cleanPath(originalFilename) : "defaultFileName";
 
         try {
             // Check if the file's name contains invalid characters
             if (fileName.contains("..")) {
                 System.out.println("Sorry! Filename contains invalid path sequence " + fileName);
-                // throw new Exception("Sorry! Filename contains invalid path sequence " + fileName);
+                // throw new Exception("Sorry! Filename contains invalid path sequence " +
+                // fileName);
             }
 
-            Document dbFile =  Document.builder()
+            Document dbFile = Document.builder()
                     .filename(fileName)
                     .fileType(file.getContentType())
                     .data(file.getBytes())
                     .build();
 
-
             return documentRepo.save(dbFile);
         } catch (IOException ex) {
             System.out.println("Could not store file " + fileName + ". Please try again!");
             return null;
-            // throw new Exception("Could not store file " + fileName + ". Please try again!", ex);
+            // throw new Exception("Could not store file " + fileName + ". Please try
+            // again!", ex);
         }
     }
 
     @Override
     public Document getFile(Integer fileId) {
         return documentRepo.findById(fileId).orElse(null);
-             
+
     }
-
-    
-
 
 }

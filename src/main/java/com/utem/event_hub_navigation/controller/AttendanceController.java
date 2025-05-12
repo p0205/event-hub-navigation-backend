@@ -2,6 +2,9 @@ package com.utem.event_hub_navigation.controller;
 
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -39,7 +42,6 @@ public class AttendanceController {
     // return ResponseEntity.ok(response);
     // }
 
-    
     @GetMapping(value = "/qr_download", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> downloadQRCode(@PathVariable("eventId") Integer eventId,
             @PathVariable("sessionId") Integer sessionId) {
@@ -108,9 +110,12 @@ public class AttendanceController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getCheckInParticipants(@PathVariable("sessionId") Integer sessionId) {
+    public ResponseEntity<?> getCheckInParticipants(
+            @PathVariable("sessionId") Integer sessionId,
+            @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+
         try {
-            return ResponseEntity.ok(attendanceService.getCheckInParticipants(sessionId));
+            return ResponseEntity.ok(attendanceService.getCheckInParticipants(sessionId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {

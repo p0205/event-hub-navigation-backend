@@ -3,7 +3,9 @@ package com.utem.event_hub_navigation.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +31,7 @@ public class EventAttendanceReportDTO {
     @Builder.Default
     private List<SessionAttendanceDTO> sessionAttendances = new ArrayList<>();
     @Builder.Default
-    private List<DemographicDataDTO> demographicData = new ArrayList<>();
+    private Map<String,Map<String,Long>> demographicData = new HashMap<>();
 
     // Getters and Setters
     
@@ -37,7 +39,6 @@ public class EventAttendanceReportDTO {
         sessionAttendances.add(new SessionAttendanceDTO(sessionName, sessionStartDate, sessionEndDate, totalAttendees, attendanceRate));
     }
     
-    // Add other getters and setters here
     
 }
 

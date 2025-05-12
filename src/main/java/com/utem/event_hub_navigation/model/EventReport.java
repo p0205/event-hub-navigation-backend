@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 
 
-public class Report {
+public class EventReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,16 +35,11 @@ public class Report {
     @JoinColumn(name = "event_id",nullable = false)
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",nullable = false)
-    private User user;
-
     @Enumerated(EnumType.STRING)
 	@Column(nullable = false)
     private ReportType type;
     
-    private String params; // json
-    private String content_json; // json
+    private String fileUrl;
     private LocalDateTime generatedAt;
 
 }

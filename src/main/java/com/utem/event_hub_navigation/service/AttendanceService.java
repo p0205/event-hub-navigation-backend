@@ -1,9 +1,12 @@
 package com.utem.event_hub_navigation.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
-import com.utem.event_hub_navigation.dto.UserDTO;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import com.utem.event_hub_navigation.dto.Attendee;
 
 public interface AttendanceService {
 
@@ -14,6 +17,5 @@ public interface AttendanceService {
 
     String checkIn(String payload, Integer participantId) throws Exception;
 
-    List<UserDTO> getCheckInParticipants(Integer sessionId);
-
+    Page<Attendee> getCheckInParticipants(Integer sessionId,Pageable pageable);
 }

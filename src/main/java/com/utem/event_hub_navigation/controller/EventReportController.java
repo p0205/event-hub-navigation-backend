@@ -13,13 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.service.impl.EventReportServiceImpl;
 
-@RequestMapping("/report/{eventId}")
+@RequestMapping("/{eventId}/report")
 @RestController
-public class ReportController {
+public class EventReportController {
 
     @Autowired
     private EventReportServiceImpl eventReportService;
 
+    
     @GetMapping
     public ResponseEntity<?> getEventAttendanceReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {

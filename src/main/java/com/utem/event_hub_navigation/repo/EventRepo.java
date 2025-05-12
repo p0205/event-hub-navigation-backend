@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.repo;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -51,4 +53,7 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                 GROUP BY s.id
             """, nativeQuery = true)
     List<CalendarEventDTO> findCalendarEntriesByOrganizerId(@Param("organizerId") Integer organizerId);
+
+    List<Event> findByEndDateTimeBeforeAndStatus(LocalDateTime nowDateTime, EventStatus eventStatus);
+
 }

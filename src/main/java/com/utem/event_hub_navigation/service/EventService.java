@@ -62,4 +62,8 @@ public interface EventService {
 
     List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception;
 
+    List<Event> getOverdueActiveEvents();
+
+    void markEventsAsCompleted(Event event);
+
 }

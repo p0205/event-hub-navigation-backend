@@ -1,16 +1,17 @@
 package com.utem.event_hub_navigation.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.utem.event_hub_navigation.dto.Attendee;
 import com.utem.event_hub_navigation.dto.QRPayload;
-import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Attendance;
 import com.utem.event_hub_navigation.model.AttendanceKey;
 import com.utem.event_hub_navigation.model.Event;
@@ -132,23 +133,10 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<UserDTO> getCheckInParticipants(Integer sessionId) {
-        List<Object[]> rows = attendanceRepo.findCheckInParticipantsBysession(sessionId);
+    public Page<Attendee> getCheckInParticipants(Integer sessionId,Pageable pageable) {
+        Page<Attendee> attendees = attendanceRepo.findCheckInParticipantsBySession(sessionId,pageable);
 
-        return rows.stream()
-        .map(row -> UserDTO.builder()
-            .id((Integer) row[0])
-            .name((String) row[1])
-            .email((String) row[2])
-            .phoneNo((String) row[3])
-            .gender((Character) row[4])
-            .faculty((String) row[5])
-            .course((String) row[6])
-            .year((String) row[7])
-            .role((String) row[8])
-            .build()
-        )
-        .toList();
+        return attendees;
     }
 }
 

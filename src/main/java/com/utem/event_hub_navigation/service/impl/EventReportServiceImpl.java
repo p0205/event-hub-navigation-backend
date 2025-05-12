@@ -1,17 +1,15 @@
 package com.utem.event_hub_navigation.service.impl;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.encoders.EncoderUtil;
-import org.jfree.chart.encoders.ImageFormat;
-import org.jfree.data.general.DefaultPieDataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,28 +22,28 @@ import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Phrase;
 import com.itextpdf.text.TabSettings;
 import com.itextpdf.text.TabStop;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.itextpdf.text.pdf.draw.DottedLineSeparator;
 import com.itextpdf.text.pdf.draw.LineSeparator;
-import com.utem.event_hub_navigation.dto.DemographicDataDTO;
-import com.utem.event_hub_navigation.dto.DemographicDataRow;
 import com.utem.event_hub_navigation.dto.EventAttendanceReportDTO;
 import com.utem.event_hub_navigation.dto.SessionAttendanceDTO;
 import com.utem.event_hub_navigation.model.Event;
+import com.utem.event_hub_navigation.model.EventReport;
+import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.repo.AttendanceRepo;
 import com.utem.event_hub_navigation.repo.EventRepo;
+import com.utem.event_hub_navigation.repo.EventReportRepo;
 import com.utem.event_hub_navigation.repo.RegistrationRepo;
 import com.utem.event_hub_navigation.repo.SessionRepo;
+import com.utem.event_hub_navigation.service.EventReportService;
 import com.utem.event_hub_navigation.utils.DateHelper;
+import com.utem.event_hub_navigation.utils.PieChartGenerator;
+import com.utem.event_hub_navigation.utils.SupabaseStorageService;
 
 @Service
-public class EventReportServiceImpl {
+public class EventReportServiceImpl implements EventReportService {
 
     private static final Font TITLE_FONT = new Font(Font.FontFamily.HELVETICA, 22, Font.BOLD);
     private static final Font HEADER_FONT = new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD);
@@ -54,32 +52,84 @@ public class EventReportServiceImpl {
     private static final Font SMALL_FONT = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.GRAY);
     private static final float HEADER_SPACING = 20f;
 
-    @Autowired
-    private EventRepo eventRepository;
+    private EventRepo eventRepo;
+
+    private RegistrationRepo registrationRepo;
+
+    private AttendanceRepo attendanceRepo;
+
+    private SessionRepo sessionRepo;
+
+    private SupabaseStorageService supabaseStorageService;
+
+    private EventReportRepo eventReportRepo;
 
     @Autowired
-    private RegistrationRepo registrationRepository;
+    public EventReportServiceImpl(EventRepo eventRepository, RegistrationRepo registrationRepository,
+            AttendanceRepo attendanceRepository, SessionRepo sessionRepository,
+            SupabaseStorageService supabaseStorageService, EventReportRepo eventReportRepo) {
+        this.eventRepo = eventRepository;
+        this.registrationRepo = registrationRepository;
+        this.sessionRepo = sessionRepository;
+        this.attendanceRepo = attendanceRepository;
+        this.supabaseStorageService = supabaseStorageService;
+        this.eventReportRepo = eventReportRepo;
+    }
 
-    @Autowired
-    private AttendanceRepo attendanceRepository;
+    @Override
+    public List<EventReport> getEventReport(Integer eventId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event with ID " + eventId + " not found."));
 
-    @Autowired
-    private SessionRepo sessionRepository;
+        return eventReportRepo.findByEvent(event);
+
+    }
+
+    @Override
+    public void storeReport(Integer eventId, ReportType reportType) throws IOException {
+        // Generate the report as a byte array
+        byte[] reportBytes = generateEventAttendanceReport(eventId);
+
+        // Generate a unique, sanitized filename
+        String filename = UUID.randomUUID() + "_EventAttendanceReport_" + eventId + ".pdf";
+
+        // Upload the file to Supabase
+        String fileUrl = supabaseStorageService.uploadFile(reportBytes, "event-report", filename);
+
+        // Fetch the event and ensure it exists
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event with ID " + eventId + " not found."));
+
+        // Build and save the report
+        EventReport report = EventReport.builder()
+                .event(event)
+                .type(reportType)
+                .fileUrl(fileUrl)
+                .generatedAt(LocalDateTime.now())
+                .build();
+
+        eventReportRepo.save(report);
+        System.out.println("Report stored successfully: " + fileUrl);
+    }
 
     public byte[] generateEventAttendanceReport(Integer eventId) {
         // The existing logic to fetch data and populate EventAttendanceReportDTO
         EventAttendanceReportDTO report = getAttendanceReportData(eventId);
         // Now, generate the report in PDF
         try {
-            return generateAttendanceReport(report, "EventAttendanceReport_" + eventId + ".pdf");
+            return generateAttendanceReportPDF(report, "EventAttendanceReport_" + eventId + ".pdf");
         } catch (DocumentException e) {
             e.printStackTrace();
-            throw new RuntimeException("Error generating PDF report");
+            throw new RuntimeException("Error generating PDF report " + e.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error generating PDF report " + e.toString());
         }
 
     }
 
-    public byte[] generateAttendanceReport(EventAttendanceReportDTO report, String filename) throws DocumentException {
+    public byte[] generateAttendanceReportPDF(EventAttendanceReportDTO report, String filename)
+            throws DocumentException {
         Document document = new Document(PageSize.A4, 50, 50, 50, 50);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         PdfWriter.getInstance(document, byteArrayOutputStream);
@@ -112,12 +162,13 @@ public class EventReportServiceImpl {
         document.add(overviewHeader);
 
         // overview content
+        addKeyValueLine(document, "Event Duration", DateHelper.formatDate(report.getEventStartDateTime()) + " - " + DateHelper.formatDate(report.getEventEndDateTime()), 0);
         addKeyValueLine(document, "Organizer", report.getEventName(), 0);
         addKeyValueLine(document, "Total Expected Participants", String.valueOf(report.getTotalExpectedParticipants()),
                 0);
         addKeyValueLine(document, "Total Registered Participants",
                 String.valueOf(report.getTotalRegisteredParticipants()), 0);
-        addKeyValueLine(document, "Registration Fill Rate", String.format("%.2f", report.getRegistrationFillRate()), 0);
+        addKeyValueLine(document, "Registration Fill Rate", String.format("%.2f", report.getRegistrationFillRate()+"%"), 0);
         document.add(Chunk.NEWLINE);
         document.add(new LineSeparator());
 
@@ -127,6 +178,7 @@ public class EventReportServiceImpl {
         sessionHeader.setSpacingAfter(HEADER_SPACING);
         document.add(sessionHeader);
 
+        System.out.println(report.getSessionAttendances().toString());
         // Session Info
         for (SessionAttendanceDTO session : report.getSessionAttendances()) {
             // Session Name
@@ -149,36 +201,36 @@ public class EventReportServiceImpl {
         // Demographic Section
         // Header
         Paragraph demographicHeader = new Paragraph("Participants Demographics", HEADER_FONT);
-        sessionHeader.setSpacingBefore(HEADER_SPACING);
-        sessionHeader.setSpacingAfter(HEADER_SPACING);
+        demographicHeader.setSpacingBefore(HEADER_SPACING);
+        demographicHeader.setSpacingAfter(HEADER_SPACING);
         document.add(demographicHeader);
 
         // Graph
         // Demographics Charts
         if (report.getDemographicData() != null) {
-            List<DemographicDataDTO> demographics = report.getDemographicData();
             try {
-                Image facultyChart = generatePieChartImage("Faculty Distribution", demographics.get(0));
-                Image courseChart = generatePieChartImage("Course Distribution", demographics.get(1));
-                Image yearChart = generatePieChartImage("Year Distribution", demographics.get(2));
-                Image genderChart = generatePieChartImage("Gender Distribution", demographics.get(3));
+
+                Image facultyChart = PieChartGenerator.generatePieChartImage("Faculty Distribution",
+                        report.getDemographicData().get("Faculty"));
+                Image courseChart = PieChartGenerator.generatePieChartImage("Course Distribution",
+                        report.getDemographicData().get("Course"));
+                Image yearChart = PieChartGenerator.generatePieChartImage("Year Distribution",
+                        report.getDemographicData().get("Year"));
+                Image genderChart = PieChartGenerator.generatePieChartImage("Gender Distribution",
+                        report.getDemographicData().get("Gender"));
                 // Faculty Chart
-                document.add(new Paragraph("Faculty Distribution", HEADER_FONT));
                 document.add(facultyChart);
                 document.add(Chunk.NEWLINE);
 
                 // Course Chart
-                document.add(new Paragraph("Course Distribution", HEADER_FONT));
                 document.add(courseChart);
                 document.add(Chunk.NEWLINE);
 
                 // Year Chart
-                document.add(new Paragraph("Year Distribution", HEADER_FONT));
                 document.add(yearChart);
                 document.add(Chunk.NEWLINE);
 
                 // Gender Chart
-                document.add(new Paragraph("Gender Distribution", HEADER_FONT));
                 document.add(genderChart);
                 document.add(Chunk.NEWLINE);
 
@@ -194,28 +246,32 @@ public class EventReportServiceImpl {
         return byteArrayOutputStream.toByteArray();
     }
 
-    private Image generatePieChartImage(String title, DemographicDataDTO demographicDataDTO) throws Exception {
-        DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        for (DemographicDataRow row : demographicDataDTO.getData()) {
-            dataset.setValue(row.getValue(), row.getCount());
-        }
+    // private Image generatePieChartImage(String title, DemographicDataDTO
+    // demographicDataDTO) throws Exception {
+    // DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
+    // for (DemographicDataRow row : demographicDataDTO.getData()) {
+    // dataset.setValue(row.getValue(), row.getCount());
+    // }
 
-        // 2. Create the chart
-        JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true, false);
+    // // 2. Create the chart
+    // JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true,
+    // false);
 
-        // 3. Convert the chart to a PNG image
-        ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
-        EncoderUtil.writeBufferedImage(chart.createBufferedImage(500, 300), ImageFormat.PNG, chartOutputStream);
+    // // 3. Convert the chart to a PNG image
+    // ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
+    // EncoderUtil.writeBufferedImage(chart.createBufferedImage(500, 300),
+    // ImageFormat.PNG, chartOutputStream);
 
-        // 4. Convert to iText Image
-        Image chartImage = Image.getInstance(chartOutputStream.toByteArray());
-        chartImage.setAlignment(Element.ALIGN_CENTER);
-        chartImage.setSpacingBefore(10f);
-        chartImage.setSpacingAfter(10f);
+    // // 4. Convert to iText Image
+    // Image chartImage = Image.getInstance(chartOutputStream.toByteArray());
+    // chartImage.setAlignment(Element.ALIGN_CENTER);
+    // chartImage.setSpacingBefore(10f);
+    // chartImage.setSpacingAfter(10f);
 
-        return chartImage;
-    }
+    // return chartImage;
+    // }
 
+    // Add Information Key-value pair in pdf
     private void addKeyValueLine(Document document, String key, String value, float leftIndentation)
             throws DocumentException {
         float tabPosition = 200f;
@@ -232,19 +288,19 @@ public class EventReportServiceImpl {
         document.add(paragraph);
     }
 
-    private void addTableHeader(PdfPTable table, String headerTitle) {
-        PdfPCell header = new PdfPCell();
-        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        header.setBorderWidth(2);
-        header.setPhrase(new Phrase(headerTitle, SUBHEADER_FONT));
-        table.addCell(header);
-    }
+    // private void addTableHeader(PdfPTable table, String headerTitle) {
+    // PdfPCell header = new PdfPCell();
+    // header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+    // header.setBorderWidth(2);
+    // header.setPhrase(new Phrase(headerTitle, SUBHEADER_FONT));
+    // table.addCell(header);
+    // }
 
     public EventAttendanceReportDTO getAttendanceReportData(Integer eventId) {
         EventAttendanceReportDTO report = new EventAttendanceReportDTO();
 
         // Fetch event details
-        Event event = eventRepository.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
+        Event event = eventRepo.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
         report.setEventName(event.getName());
         report.setOrganizerName(event.getOrganizer().getName());
         report.setEventStartDateTime(event.getStartDateTime());
@@ -252,7 +308,7 @@ public class EventReportServiceImpl {
         report.setReportGenerationDate(LocalDateTime.now());
 
         // Fetch registrations for event
-        int totalRegisteredParticipants = registrationRepository.countByEventId(eventId);
+        int totalRegisteredParticipants = registrationRepo.countByEventId(eventId);
         int expectedParticipants = event.getParticipantsNo();
         report.setTotalRegisteredParticipants(totalRegisteredParticipants);
         report.setTotalExpectedParticipants(expectedParticipants);
@@ -262,9 +318,9 @@ public class EventReportServiceImpl {
         report.setRegistrationFillRate(registrationFillRate);
 
         // Calculate Session-Specific Attendance Rates
-        List<Session> sessions = sessionRepository.findByEvent(event);
+        List<Session> sessions = sessionRepo.findByEvent(event);
         for (Session session : sessions) {
-            int totalAttendeesForSession = attendanceRepository.countBySessionId(session.getId());
+            int totalAttendeesForSession = attendanceRepo.countBySessionId(session.getId());
             double sessionAttendanceRate = (double) totalAttendeesForSession / totalRegisteredParticipants * 100;
             report.addSessionAttendance(session.getSessionName(), session.getStartDateTime(), session.getEndDateTime(),
                     totalAttendeesForSession, sessionAttendanceRate);
@@ -272,22 +328,34 @@ public class EventReportServiceImpl {
 
         // Fetch Demographic Data (Gender and Faculty)
 
-        List<DemographicDataDTO> demographicDataDTOs = new ArrayList<>();
+        Map<String, Map<String, Long>> demographicData = new HashMap<>();
 
-        List<DemographicDataRow> facultyDataRows = registrationRepository.getDemographicDataGroupByFaculty(eventId);
+        Map<String, Long> facultyData = convertGraphDataType(
+                registrationRepo.getDemographicDataGroupByFaculty(eventId));
+        demographicData.put("Faculty", facultyData);
 
-        demographicDataDTOs.add(new DemographicDataDTO("Faculty", facultyDataRows));
+        Map<String, Long> courseData = convertGraphDataType(registrationRepo.getDemographicDataGroupByCourse(eventId));
+        demographicData.put("Course", courseData);
 
-        List<DemographicDataRow> courseDataRows = registrationRepository.getDemographicDataGroupByCourse(eventId);
-        demographicDataDTOs.add(new DemographicDataDTO("Course", courseDataRows));
+        Map<String, Long> rawYearData = convertGraphDataType(registrationRepo.getDemographicDataGroupByYear(eventId));
+        Map<String, Long> yearData = rawYearData.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> "Year " + entry.getKey(),
+                        Map.Entry::getValue));
+        demographicData.put("Year", yearData);
 
-        List<DemographicDataRow> yearDataRows = registrationRepository.getDemographicDataGroupByYear(eventId);
-        demographicDataDTOs.add(new DemographicDataDTO("Year", yearDataRows));
-        List<DemographicDataRow> genderDataRows = registrationRepository.getDemographicDataGroupByGender(eventId);
+        Map<String, Long> genderData = convertGraphDataType(registrationRepo.getDemographicDataGroupByGender(eventId));
+        demographicData.put("Gender", genderData);
 
-        demographicDataDTOs.add(new DemographicDataDTO("Year", genderDataRows));
-        report.setDemographicData(demographicDataDTOs);
+        report.setDemographicData(demographicData);
 
+        System.out.println(report.getDemographicData().toString());
         return report;
+    }
+
+    public Map<String, Long> convertGraphDataType(List<Object[]> data) {
+        return data
+                .stream()
+                .collect(Collectors.toMap(row -> (String) row[0], row -> (Long) row[1]));
     }
 }

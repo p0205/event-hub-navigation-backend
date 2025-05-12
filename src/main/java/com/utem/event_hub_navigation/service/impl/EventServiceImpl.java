@@ -3,7 +3,9 @@ package com.utem.event_hub_navigation.service.impl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -74,11 +76,12 @@ public class EventServiceImpl implements EventService {
 
     private VenueService venueService;
 
-    private BudgetCategoryService budgetCategoryService; 
+    private BudgetCategoryService budgetCategoryService;
 
     @Autowired
     public EventServiceImpl(EventRepo eventRepo, UserRepo userRepo, EventMapper eventMapper, UserMapper userMapper,
-            RegistrationRepo registrationRepo, SessionRepo sessionRepo,VenueService venueService, BudgetCategoryService budgetCategoryService) {
+            RegistrationRepo registrationRepo, SessionRepo sessionRepo, VenueService venueService,
+            BudgetCategoryService budgetCategoryService) {
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.eventMapper = eventMapper;
@@ -93,12 +96,9 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDTO createEvent(EventDTO dto) {
 
-        System.out.println("HIHIHIHIH"+dto.getEventBudgets().toString());
         Event event = eventMapper.toEntity(dto);
-        System.out.println("HIHIHIHIH"+dto.getEventBudgets().toString());
-        System.out.println(event.getEventBudgets().toString());
         // 1. Set back-references
-        List<Session>  sessions = new ArrayList<>();
+        List<Session> sessions = new ArrayList<>();
         for (Session session : event.getSessions()) {
             session.setEvent(event);
 
@@ -112,10 +112,9 @@ public class EventServiceImpl implements EventService {
             List<SessionVenue> sessionVenues = new ArrayList<>();
             for (Venue venue : sessionDTO.getVenues()) {
 
-                 Venue managedVenue = venueService.getVenue(venue.getId());
-                 if(managedVenue.equals(null))
+                Venue managedVenue = venueService.getVenue(venue.getId());
+                if (managedVenue.equals(null))
                     throw new EntityNotFoundException("Venue not found with ID: " + venue.getId());
-                  
 
                 SessionVenueKey key = new SessionVenueKey();
                 key.setSessionId(session.getId()); // will be null now, updated after save
@@ -132,19 +131,35 @@ public class EventServiceImpl implements EventService {
             session.setSessionVenues(sessionVenues);
             sessions.add(session);
         }
-        
+
         event.setSessions(sessions);
+
+        // Find the earliest start date/time among all sessions
+        Optional<LocalDateTime> earliestStartTime = sessions.stream()
+                .map(Session::getStartDateTime)
+                .filter(dt -> dt != null) // Filter out any potential null dates
+                .min(Comparator.naturalOrder());
+
+        // Find the latest end date/time among all sessions
+        Optional<LocalDateTime> latestEndTime = sessions.stream()
+                .map(Session::getEndDateTime)
+                .filter(dt -> dt != null) // Filter out any potential null dates
+                .max(Comparator.naturalOrder());
+
+        // Set the calculated dates on the event
+        earliestStartTime.ifPresent(event::setStartDateTime);
+        latestEndTime.ifPresent(event::setEndDateTime);
 
         // 3. Handle budgets
         for (EventBudget budget : event.getEventBudgets()) {
             System.out.println(budget.toString());
-            
+
             EventBudgetKey key = new EventBudgetKey();
             key.setBudgetId(budget.getId().getBudgetId());
             key.setEventId(event.getId());
 
             BudgetCategory category = budgetCategoryService.getBudgetCategoryById(budget.getId().getBudgetId());
-            
+
             // key.setEventId() will be set after save
             budget.setId(key);
             budget.setEvent(event);
@@ -289,7 +304,7 @@ public class EventServiceImpl implements EventService {
     public Event getEventById(Integer id) {
         Optional<Event> optionalEvent = eventRepo.findById(id);
 
-        if(!optionalEvent.isPresent()) {
+        if (!optionalEvent.isPresent()) {
             return null;
         }
         return optionalEvent.get();
@@ -498,11 +513,23 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception{
+    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception {
         try {
             return eventRepo.findCalendarEntriesByOrganizerId(userID);
         } catch (Exception e) {
             throw new Exception(e.getMessage());
         }
     }
+
+    @Override
+    public List<Event> getOverdueActiveEvents() {
+        return eventRepo.findByEndDateTimeBeforeAndStatus(LocalDateTime.now(), EventStatus.ACTIVE);
+    }
+
+    @Override
+    public void markEventsAsCompleted(Event event) {
+        event.setStatus(EventStatus.COMPLETED);
+        eventRepo.save(event);
+    }
+
 }

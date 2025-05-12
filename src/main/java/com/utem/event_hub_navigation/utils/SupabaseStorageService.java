@@ -71,4 +71,30 @@ public class SupabaseStorageService {
             throw new RuntimeException("Download failed: " + response.getBody());
         }
     }
+
+    public String uploadFile(byte[] fileBytes, String bucketName, String path) throws IOException {
+        String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucketName + "/" + path;
+    
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("apikey", serviceKey); // service role key
+        headers.set("Authorization", "Bearer " + serviceKey); // also service role key
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM); // Use octet-stream for raw bytes
+    
+        // Pass the byte[] fileBytes instead of file.getBytes()
+        HttpEntity<byte[]> entity = new HttpEntity<>(fileBytes, headers);
+    
+        ResponseEntity<String> response = restTemplate.exchange(
+                uploadUrl,
+                HttpMethod.PUT,
+                entity,
+                String.class
+        );
+    
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return supabaseUrl + "/storage/v1/object/public/" + bucketName + "/" + path;
+        } else {
+            throw new RuntimeException("Upload failed: " + response.getBody());
+        }
+    }
+    
 }

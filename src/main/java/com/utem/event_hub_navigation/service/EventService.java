@@ -2,6 +2,8 @@ package com.utem.event_hub_navigation.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.utem.event_hub_navigation.dto.CalendarEventDTO;
@@ -56,7 +58,7 @@ public interface EventService {
 
     List<UserDTO> importParticipants(Integer eventId, List<UserDTO> participants);
 
-    List<UserDTO> getParticipantsByEventId(Integer eventId);
+    Page<UserDTO> getParticipantsByEventId(Integer eventId,Pageable pageable);
 
     boolean removeParticipant(Integer eventId, Integer participantId);
 

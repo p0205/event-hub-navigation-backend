@@ -3,6 +3,9 @@ package com.utem.event_hub_navigation.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -211,9 +214,14 @@ public class EventController {
 
     //Get participants by event
     @GetMapping("/{eventId}/participants")
-    public ResponseEntity<List<UserDTO>> getParticipants(@PathVariable Integer eventId) {
-        List<UserDTO> participants = eventService.getParticipantsByEventId(eventId);
-        return ResponseEntity.ok(participants);
+    public ResponseEntity<?> getParticipants(@PathVariable Integer eventId,
+            @PageableDefault(size = 10) Pageable pageable) {
+        try {
+            Page<UserDTO> participants = eventService.getParticipantsByEventId(eventId, pageable);
+            return ResponseEntity.ok(participants);
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            }
     }
 
     //Delete Participants

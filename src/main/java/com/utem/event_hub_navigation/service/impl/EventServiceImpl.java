@@ -16,6 +16,8 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -486,17 +488,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<UserDTO> getParticipantsByEventId(Integer eventId) {
+    public Page<UserDTO> getParticipantsByEventId(Integer eventId, Pageable pageable) {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        List<Registration> registrations = registrationRepo.findByEvent(event);
+        Page<Registration> registrations = registrationRepo.findByEvent(event,pageable);
 
-        List<UserDTO> participants = registrations.stream()
-                .map(registration -> userMapper.toUserDTO(registration.getParticipant()))
-                .collect(Collectors.toList());
+        return registrations.map(registration -> userMapper.toUserDTO(registration.getParticipant()));
 
-        return participants;
+     
     }
 
     @Override

@@ -1,6 +1,9 @@
 package com.utem.event_hub_navigation.repo;
 
 import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +18,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
 
     Registration findByEventAndParticipant(Event event, User user);
 
-    List<Registration> findByEvent(Event event);
+    Page<Registration> findByEvent(Event event, Pageable pageable);
 
     Boolean existsByEventAndParticipant(Event event, User user);
 

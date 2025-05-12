@@ -113,8 +113,9 @@ public class AttendanceController {
     public ResponseEntity<?> getCheckInParticipants(
             @PathVariable("sessionId") Integer sessionId,
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
-
+                System.out.println(sessionId);
         try {
+            System.out.println(attendanceService.getCheckInParticipants(sessionId, pageable).toString());
             return ResponseEntity.ok(attendanceService.getCheckInParticipants(sessionId, pageable));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

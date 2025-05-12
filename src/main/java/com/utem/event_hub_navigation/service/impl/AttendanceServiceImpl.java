@@ -135,7 +135,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     public Page<Attendee> getCheckInParticipants(Integer sessionId,Pageable pageable) {
         Page<Attendee> attendees = attendanceRepo.findCheckInParticipantsBySession(sessionId,pageable);
-
+        
         return attendees;
     }
 }

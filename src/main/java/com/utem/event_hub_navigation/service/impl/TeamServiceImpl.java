@@ -4,6 +4,8 @@ package com.utem.event_hub_navigation.service.impl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
@@ -75,7 +77,7 @@ public class TeamServiceImpl implements TeamService {
     // Get team members
 
     @Override
-    public List<TeamMemberDTO> getTeamMembers(Integer eventId) {
+    public Page<TeamMemberDTO> getTeamMembers(Integer eventId, Pageable pageable) {
         // Check if the event exists
         Event event = eventService.getEventById(eventId);
         if (event == null) {
@@ -83,7 +85,7 @@ public class TeamServiceImpl implements TeamService {
         }
 
         // Get team members for the event
-        List<TeamMemberDTO> teamMembers = teamMemberRepo.findUserDetailsAndRoleByEventIdJPQL(eventId);
+        Page<TeamMemberDTO> teamMembers = teamMemberRepo.findUserDetailsAndRoleByEventIdJPQL(eventId, pageable);
         return teamMembers;
     }
 

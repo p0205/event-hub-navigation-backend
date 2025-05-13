@@ -3,6 +3,10 @@ package com.utem.event_hub_navigation.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.service.TeamService;
 
 @RestController
@@ -26,23 +31,26 @@ public class TeamController {
         this.teamService = teamService;
     }
 
-    // //Add team member 
+    // //Add team member
     // @PostMapping
-    // public ResponseEntity<?> addTeamMember(@PathVariable("eventId") Integer eventId, @RequestParam Integer userId, @RequestParam Integer roleId){
-    //     try {
-    //         teamService.addTeamMember(eventId, userId, roleId);
+    // public ResponseEntity<?> addTeamMember(@PathVariable("eventId") Integer
+    // eventId, @RequestParam Integer userId, @RequestParam Integer roleId){
+    // try {
+    // teamService.addTeamMember(eventId, userId, roleId);
 
-    //         return ResponseEntity.status(HttpStatus.CREATED).build();
-    //     } catch (IllegalArgumentException e) {
-    //         return ResponseEntity.badRequest().body(e.getMessage());
-    //     } catch (Exception e) {
-    //         return ResponseEntity.internalServerError().body("Failed to add member: " + e.getMessage());
-    //     }
+    // return ResponseEntity.status(HttpStatus.CREATED).build();
+    // } catch (IllegalArgumentException e) {
+    // return ResponseEntity.badRequest().body(e.getMessage());
+    // } catch (Exception e) {
+    // return ResponseEntity.internalServerError().body("Failed to add member: " +
+    // e.getMessage());
+    // }
     // }
 
-    //Add team member 
+    // Add team member
     @PostMapping
-    public ResponseEntity<?> addTeamMembers(@PathVariable("eventId") Integer eventId, @RequestParam List<Integer> userIds, @RequestParam Integer roleId){
+    public ResponseEntity<?> addTeamMembers(@PathVariable("eventId") Integer eventId,
+            @RequestParam List<Integer> userIds, @RequestParam Integer roleId) {
         try {
             teamService.addTeamMembers(eventId, userIds, roleId);
 
@@ -54,13 +62,18 @@ public class TeamController {
         }
     }
 
-
-    //Remove team member
-    //Get team members
+    // Remove team member
+    // Get team members
     @GetMapping
-    public ResponseEntity<?> getTeamMembers(@PathVariable("eventId") Integer eventId){
+    public ResponseEntity<?> getTeamMembers(
+            @PathVariable("eventId") Integer eventId,
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "10")  Integer pageSize,
+            @RequestParam(defaultValue = "user.name")  String sortBy) {
         try {
-            return ResponseEntity.ok(teamService.getTeamMembers(eventId));
+            Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).ascending());
+            Page<TeamMemberDTO> members = teamService.getTeamMembers(eventId, paging);
+            return ResponseEntity.ok(members);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -69,10 +82,10 @@ public class TeamController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<?> removeTeamMember(@PathVariable("eventId") Integer eventId, @PathVariable("userId") Integer userId){
+    public ResponseEntity<?> removeTeamMember(@PathVariable("eventId") Integer eventId,
+            @PathVariable("userId") Integer userId) {
         try {
             teamService.removeTeamMember(eventId, userId);
-            System.out.println("remove team member");
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

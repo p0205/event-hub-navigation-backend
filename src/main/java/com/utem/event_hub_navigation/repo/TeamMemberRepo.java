@@ -1,7 +1,7 @@
 package com.utem.event_hub_navigation.repo;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,5 +21,5 @@ public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey>
             "JOIN tm.user u " +
             "JOIN tm.role r " + // Join Role to get the name
             "WHERE tm.event.id = :eventId")
-    List<TeamMemberDTO> findUserDetailsAndRoleByEventIdJPQL(@Param("eventId") Integer eventId);
+    Page<TeamMemberDTO> findUserDetailsAndRoleByEventIdJPQL(@Param("eventId") Integer eventId, Pageable pageable);
 }

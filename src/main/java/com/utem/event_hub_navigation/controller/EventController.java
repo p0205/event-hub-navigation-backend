@@ -4,8 +4,9 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -61,7 +62,7 @@ public class EventController {
             @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
                 name, description, organizerIdString,
-                participantsNoString, sessionsJson, eventBudgetsJson,supportingDocument);
+                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument);
 
         EventDTO savedEvent = eventService.createEvent(dto);
 
@@ -183,7 +184,7 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
-    //Get sessions of an event
+    // Get sessions of an event
     @GetMapping("/{eventId}/sessions")
     public ResponseEntity<?> getSessionsByEvent(@PathVariable("eventId") Integer eventId) {
         try {
@@ -193,7 +194,7 @@ public class EventController {
         }
     }
 
-    //Import participants to get information but no insert to database yet
+    // Import participants to get information but no insert to database yet
     @PostMapping("/{eventId}/participants/getInfo")
     public ResponseEntity<List<UserDTO>> importParticipants(
             // @PathVariable Long eventId,
@@ -203,7 +204,7 @@ public class EventController {
         return ResponseEntity.ok(participantList);
     }
 
-    //Add participants to event
+    // Add participants to event
     @PostMapping("/{eventId}/participants")
     public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId,
             @RequestBody List<UserDTO> participantList) {
@@ -212,19 +213,22 @@ public class EventController {
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredList);
     }
 
-    //Get participants by event
+    // Get participants by event
     @GetMapping("/{eventId}/participants")
     public ResponseEntity<?> getParticipants(@PathVariable Integer eventId,
-            @PageableDefault(size = 10) Pageable pageable) {
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "participant.name") String sortBy) {
         try {
-            Page<UserDTO> participants = eventService.getParticipantsByEventId(eventId, pageable);
+            Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sortBy));
+            Page<UserDTO> participants = eventService.getParticipantsByEventId(eventId, paging);
             return ResponseEntity.ok(participants);
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
-    //Delete Participants
+    // Delete Participants
     @DeleteMapping("/{eventId}/participants/{participantId}")
     public ResponseEntity<Void> removeParticipant(@PathVariable Integer eventId,
             @PathVariable Integer participantId) {
@@ -237,9 +241,9 @@ public class EventController {
         }
     }
 
-    //Get calender events to be displayed
+    // Get calender events to be displayed
     @GetMapping("/calendar")
-    public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId){
+    public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
         try {
             return ResponseEntity.ok(eventService.getCalendarEvent(userId));
         } catch (IllegalArgumentException e) {

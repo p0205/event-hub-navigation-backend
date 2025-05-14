@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.mapper.UserMapper;
-import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Users;
 import com.utem.event_hub_navigation.repo.UserRepo;
 import com.utem.event_hub_navigation.service.UserService;
 
@@ -27,13 +27,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> getUsersByEmail(List<String> emails) {
 
-        List<User> users = userRepo.findByEmailIn(emails);
+        List<Users> users = userRepo.findByEmailIn(emails);
         return userMapper.toUserDTOs(users);
     }
 
     @Override
     public UserDTO getUserByEmail(String email) {
-        Optional<User> user = userRepo.findByEmail(email);
+        Optional<Users> user = userRepo.findByEmail(email);
         if (user.isEmpty()) {
             return null;
         }
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDTO> getUserByNameLike(String name) {
-        List<User> user = userRepo.findByNameContains(name);
+        List<Users> user = userRepo.findByNameContains(name);
         if (user.isEmpty()) {
             return null;
         }
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> findByEmailOrName(String query) {
 
-        List<User> users = userRepo.findByNameContains(query);
+        List<Users> users = userRepo.findByNameContains(query);
         if (users.isEmpty()) {
             users = userRepo.findByEmailContains(query);
             if (users.isEmpty()) {
@@ -65,8 +65,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Integer userId){
-        Optional<User> user = userRepo.findById(userId);
+    public Users getUserById(Integer userId){
+        Optional<Users> user = userRepo.findById(userId);
         if (user.isEmpty()) {
             return null;
         }

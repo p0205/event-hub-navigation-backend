@@ -11,16 +11,16 @@ import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.Registration;
-import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Users;
 
 @Repository
 public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
 
-    Registration findByEventAndParticipant(Event event, User user);
+    Registration findByEventAndParticipant(Event event, Users user);
 
     Page<Registration> findByEvent(Event event, Pageable pageable);
 
-    Boolean existsByEventAndParticipant(Event event, User user);
+    Boolean existsByEventAndParticipant(Event event, Users user);
 
     @Query("SELECT count(r.id) FROM Registration r WHERE r.event.id = :eventId")
     int countByEventId(Integer eventId);

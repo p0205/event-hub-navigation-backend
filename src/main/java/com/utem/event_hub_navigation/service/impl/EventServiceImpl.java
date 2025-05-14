@@ -47,8 +47,8 @@ import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.SessionVenue;
 import com.utem.event_hub_navigation.model.SessionVenueKey;
+import com.utem.event_hub_navigation.model.Users;
 import com.utem.event_hub_navigation.model.Registration;
-import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.SessionRepo;
@@ -262,11 +262,11 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found with ID: " + eventId));
 
-        // Fetch the new organizer User if organizerId is provided
-        // User newOrganizer = null;
+        // Fetch the new organizer Users if organizerId is provided
+        // Users newOrganizer = null;
         // if (organizerId != null) {
         // newOrganizer = userRepository.findById(organizerId)
-        // .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "New Organizer User
+        // .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "New Organizer Users
         // not found with ID: " + organizerId));
         // }
 
@@ -323,9 +323,9 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<Event> getEventsByOrganizer(Integer organizerId) {
-        User organizer = userRepo.findById(organizerId)
+        Users organizer = userRepo.findById(organizerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Organizer User not found with ID: " + organizerId));
+                        "Organizer Users not found with ID: " + organizerId));
 
         return eventRepo.findByOrganizerOrderByStartDateTimeDesc(organizer);
     }
@@ -367,9 +367,9 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventSimpleResponse> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status) {
-        User organizer = userRepo.findById(organizerId)
+        Users organizer = userRepo.findById(organizerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Organizer User not found with ID: " + organizerId));
+                        "Organizer Users not found with ID: " + organizerId));
 
         List<Event> events = eventRepo.findByOrganizerAndStatusOrderByStartDateTimeAsc(organizer, status);
         List<EventSimpleResponse> eventSimpleResponses = new ArrayList<>();
@@ -427,7 +427,7 @@ public class EventServiceImpl implements EventService {
             }
 
             // Query the database for users by email
-            List<User> users = userRepo.findByEmailIn(emails);
+            List<Users> users = userRepo.findByEmailIn(emails);
 
             // Format response
             List<UserDTO> result = users.stream().map(user -> {
@@ -451,16 +451,16 @@ public class EventServiceImpl implements EventService {
 
         List<UserDTO> results = new ArrayList<>();
         for (UserDTO dto : participants) {
-            Optional<User> optionalUser = userRepo.findByEmail(dto.getEmail());
+            Optional<Users> optionalUser = userRepo.findByEmail(dto.getEmail());
 
-            User user;
+            Users user;
 
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
             } else {
                 continue;
                 // Optional: Create new user if not exists
-                // user = new User();
+                // user = new Users();
                 // user.setEmail(dto.getEmail());
                 // user.setName(dto.getName());
                 // user.setFaculty(dto.getFaculty());
@@ -536,7 +536,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        User participant = userRepo.findById(participantId)
+        Users participant = userRepo.findById(participantId)
                 .orElseThrow(() -> new RuntimeException("Participant not found"));
 
         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);

@@ -13,7 +13,7 @@ import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.Role;
 import com.utem.event_hub_navigation.model.TeamMember;
 import com.utem.event_hub_navigation.model.TeamMemberKey;
-import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Users;
 import com.utem.event_hub_navigation.repo.TeamMemberRepo;
 import com.utem.event_hub_navigation.service.EventService;
 import com.utem.event_hub_navigation.service.RoleService;
@@ -44,9 +44,9 @@ public class TeamServiceImpl implements TeamService {
     public void addTeamMemberRole(Integer eventId, Integer userId, Integer roleId) throws Exception {
 
         // Check if the user exists
-        User user = userService.getUserById(userId);
+        Users user = userService.getUserById(userId);
         if (user == null) {
-            throw new Exception("User not found");
+            throw new Exception("Users not found");
         }
 
         // Check if the event exists
@@ -108,9 +108,9 @@ public class TeamServiceImpl implements TeamService {
         }
 
         // Check if the user exists
-        User user = userService.getUserById(userId);
+        Users user = userService.getUserById(userId);
         if (user == null) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("Users not found");
         }
 
         // Remove team member from the event

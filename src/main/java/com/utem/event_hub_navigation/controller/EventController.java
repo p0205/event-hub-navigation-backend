@@ -49,7 +49,7 @@ public class EventController {
 
     // Create a new event
     // POST /events?organizerId=...
-    // The request body should contain event details *without* the full User object,
+    // The request body should contain event details *without* the full Users object,
     // but the organizerId is passed as a request parameter.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EventDTO> createEvent(
@@ -126,7 +126,7 @@ public class EventController {
 
     // Update an existing event
     // PATCH /events/{id}... (organizerId is optional if not changing organizer)
-    // Request body contains updated event details (excluding the complex User
+    // Request body contains updated event details (excluding the complex Users
     // object)
     @PatchMapping("/{id}")
     public ResponseEntity<Event> updateEvent(
@@ -153,7 +153,7 @@ public class EventController {
 
     // --- Custom Query Endpoints ---
 
-    // Get events by organizer User ID and status
+    // Get events by organizer Users ID and status
     // GET /api/events/search?organizerId=...&status=...
     @GetMapping("/byOrganizerAndStatus")
     public ResponseEntity<List<EventSimpleResponse>> getEventsByOrganizerAndStatus(
@@ -174,7 +174,7 @@ public class EventController {
     // return ResponseEntity.ok(events);
     // }
 
-    // Get events by organizer User ID
+    // Get events by organizer Users ID
     // GET /events/byOrganizer?organizerId=...
     @GetMapping("/byOrganizer")
     public ResponseEntity<EventResponseByStatus> getEventsByOrganizer(

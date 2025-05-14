@@ -12,14 +12,14 @@ import org.springframework.stereotype.Repository;
 import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
-import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Users;
 
 @Repository
 public interface EventRepo extends JpaRepository<Event, Integer> {
 
-    List<Event> findByOrganizerAndStatusOrderByStartDateTimeAsc(User organizer, EventStatus status);
+    List<Event> findByOrganizerAndStatusOrderByStartDateTimeAsc(Users organizer, EventStatus status);
 
-    // List<Event> findByOrganizerAndStatusOrderByStartDateTimeDesc(User organizer,
+    // List<Event> findByOrganizerAndStatusOrderByStartDateTimeDesc(Users organizer,
     // EventStatus status);
 
     // @Query("SELECT e FROM Event e WHERE e.startDateTime >= :startOfDay AND
@@ -29,7 +29,7 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
 
     // You might also want to find events by just the organizer user
 
-    List<Event> findByOrganizerOrderByStartDateTimeDesc(User organizer);
+    List<Event> findByOrganizerOrderByStartDateTimeDesc(Users organizer);
 
     List<Event> findByStatus(EventStatus status);
 

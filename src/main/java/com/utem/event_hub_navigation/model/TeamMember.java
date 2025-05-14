@@ -39,7 +39,7 @@ public class TeamMember {
     @MapsId("userId") // maps the venueId part of the embedded ID
     @JoinColumn(name = "user_id")
     @JsonBackReference
-    private User user;
+    private Users user;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId("roleId")

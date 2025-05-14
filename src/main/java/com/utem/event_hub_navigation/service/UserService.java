@@ -3,7 +3,7 @@ package com.utem.event_hub_navigation.service;
 import java.util.List;
 
 import com.utem.event_hub_navigation.dto.UserDTO;
-import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.model.Users;
 
 public interface UserService {
 
@@ -15,6 +15,6 @@ public interface UserService {
 
     public List<UserDTO> findByEmailOrName(String query);
 
-    User getUserById(Integer userId);
+    Users getUserById(Integer userId);
 
 }

@@ -24,7 +24,11 @@ public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey>
     // Page<TeamMemberDTO> findUserDetailsAndRoleByEventIdJPQL(@Param("eventId") Integer eventId, Pageable pageable);
 
     @Query(value = """
-        SELECT u.id as userId, u.name, u.email, GROUP_CONCAT(r.name) as roles
+        SELECT 
+            u.id as userId, 
+            u.name as name, 
+            u.email as email, 
+            GROUP_CONCAT(r.name) as roles
         FROM team_member tm
         JOIN users u ON tm.user_id = u.id
         JOIN role r ON tm.role_id = r.id

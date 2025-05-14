@@ -41,7 +41,7 @@ public class Registration {
 
     @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id",nullable = false)
-    private User participant;
+    private Users participant;
     
     @CreatedDate
     private LocalDate register_date;

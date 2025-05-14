@@ -54,7 +54,7 @@ public class Event {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id",nullable = false)
-    private User organizer;
+    private Users organizer;
 
     @CreatedDate
     private LocalDate createdAt;

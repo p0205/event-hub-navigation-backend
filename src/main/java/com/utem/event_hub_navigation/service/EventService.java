@@ -10,6 +10,7 @@ import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
@@ -58,7 +59,9 @@ public interface EventService {
 
     List<UserDTO> importParticipants(Integer eventId, List<UserDTO> participants);
 
-    Page<UserDTO> getParticipantsByEventId(Integer eventId,Pageable pageable);
+    Page<UserDTO> getParticipantsByEventId(Integer eventId, Pageable pageable);
+
+    ParticipantsDemographicsDTO getParticipantsDemographicsByEventId(Integer eventId);
 
     boolean removeParticipant(Integer eventId, Integer participantId);
 

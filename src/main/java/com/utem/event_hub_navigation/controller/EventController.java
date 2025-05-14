@@ -228,6 +228,16 @@ public class EventController {
         }
     }
 
+    // Get participants by event
+    @GetMapping("/{eventId}/participants/demographics")
+    public ResponseEntity<?> getParticipantsDemographics(@PathVariable Integer eventId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsDemographicsByEventId(eventId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     // Delete Participants
     @DeleteMapping("/{eventId}/participants/{participantId}")
     public ResponseEntity<Void> removeParticipant(@PathVariable Integer eventId,

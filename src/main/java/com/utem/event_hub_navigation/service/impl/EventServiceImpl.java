@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,7 @@ import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.mapper.EventMapper;
@@ -55,6 +57,7 @@ import com.utem.event_hub_navigation.repo.UserRepo;
 import com.utem.event_hub_navigation.service.BudgetCategoryService;
 import com.utem.event_hub_navigation.service.EventService;
 import com.utem.event_hub_navigation.service.VenueService;
+import com.utem.event_hub_navigation.utils.DataConversionUtil;
 import com.utem.event_hub_navigation.utils.JsonParserUtil;
 import com.utem.event_hub_navigation.utils.NumberParserUtil;
 
@@ -492,11 +495,40 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        Page<Registration> registrations = registrationRepo.findByEvent(event,pageable);
+        Page<Registration> registrations = registrationRepo.findByEvent(event, pageable);
 
         return registrations.map(registration -> userMapper.toUserDTO(registration.getParticipant()));
 
-     
+    }
+
+    @Override
+    public ParticipantsDemographicsDTO getParticipantsDemographicsByEventId(Integer eventId) {
+        Event event = eventRepo.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        int totalNumber = registrationRepo.countByEventId(eventId);
+        Map<String, Long> facultyData = DataConversionUtil.convertObjectListToMap(
+                registrationRepo.getDemographicDataGroupByFaculty(eventId));
+
+        Map<String, Long> courseData = DataConversionUtil
+                .convertObjectListToMap(registrationRepo.getDemographicDataGroupByCourse(eventId));
+
+        Map<String, Long> yearData = DataConversionUtil
+                .convertObjectListToMap(registrationRepo.getDemographicDataGroupByYear(eventId));
+
+        Map<String, Long> genderData = DataConversionUtil
+                .convertObjectListToMap(registrationRepo.getDemographicDataGroupByGender(eventId));
+
+        ParticipantsDemographicsDTO demographicsDTO = ParticipantsDemographicsDTO.builder()
+                .totalNumber(totalNumber)
+                .byCourse(courseData)
+                .byFaculty(facultyData)
+                .byGender(genderData)
+                .byYear(yearData)
+                .build();
+
+        return demographicsDTO;
+
     }
 
     @Override

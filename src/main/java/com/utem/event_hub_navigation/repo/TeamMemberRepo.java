@@ -28,7 +28,7 @@ public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey>
             u.id as userId, 
             u.name as name, 
             u.email as email, 
-            GROUP_CONCAT(r.name) as roles
+            GROUP_CONCAT(r.name SEPARATOR ', ') as roles
         FROM team_member tm
         JOIN users u ON tm.user_id = u.id
         JOIN role r ON tm.role_id = r.id

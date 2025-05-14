@@ -1,6 +1,5 @@
 package com.utem.event_hub_navigation.repo;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 

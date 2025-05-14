@@ -17,5 +17,6 @@ public class TeamMemberKey implements Serializable {
 
     private Integer eventId;
     private Integer userId;
+    private Integer roleId;
     
 }

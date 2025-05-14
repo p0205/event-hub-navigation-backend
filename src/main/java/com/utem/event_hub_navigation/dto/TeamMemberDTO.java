@@ -1,6 +1,10 @@
 package com.utem.event_hub_navigation.dto;
 
 
+import java.util.List;
+
+import com.utem.event_hub_navigation.model.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +19,5 @@ public class TeamMemberDTO {
     private Integer userId;
     private String name;
     private String email;
-    private String role;
+    private String roles;
 }

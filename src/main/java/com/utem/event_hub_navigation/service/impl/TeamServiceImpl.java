@@ -41,7 +41,7 @@ public class TeamServiceImpl implements TeamService {
 
     // Add team member
     @Override
-    public void addTeamMember(Integer eventId, Integer userId, Integer roleId) throws Exception {
+    public void addTeamMemberRole(Integer eventId, Integer userId, Integer roleId) throws Exception {
 
         // Check if the user exists
         User user = userService.getUserById(userId);
@@ -62,10 +62,9 @@ public class TeamServiceImpl implements TeamService {
         }
 
 
-        TeamMemberKey teamMemberKey = new TeamMemberKey(userId, eventId);
+        TeamMemberKey teamMemberKey = new TeamMemberKey(userId, eventId,roleId);
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberKey)
-                .role(role)
                 .user(user)
                 .event(event)
                 .build();
@@ -76,7 +75,7 @@ public class TeamServiceImpl implements TeamService {
     // Remove team member
     // Get team members
 
-    @Override
+    // @Override
     public Page<TeamMemberDTO> getTeamMembers(Integer eventId, Pageable pageable) {
         // Check if the event exists
         Event event = eventService.getEventById(eventId);
@@ -85,7 +84,9 @@ public class TeamServiceImpl implements TeamService {
         }
 
         // Get team members for the event
-        Page<TeamMemberDTO> teamMembers = teamMemberRepo.findUserDetailsAndRoleByEventIdJPQL(eventId, pageable);
+        Page<TeamMemberDTO> teamMembers = teamMemberRepo.findTeamMembersWithRolesByEventId(eventId, pageable);
+
+        System.out.println(teamMembers.toString());
         return teamMembers;
     }
 
@@ -93,7 +94,7 @@ public class TeamServiceImpl implements TeamService {
     public void addTeamMembers(Integer eventId, List<Integer> userIds, Integer roleId) throws Exception {
         for(Integer userId : userIds) {
            
-                addTeamMember(eventId, userId, roleId);
+                addTeamMemberRole(eventId, userId, roleId);
             
         }
     }

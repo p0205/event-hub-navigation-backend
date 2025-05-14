@@ -50,9 +50,9 @@ public class TeamController {
     // Add team member
     @PostMapping
     public ResponseEntity<?> addTeamMembers(@PathVariable("eventId") Integer eventId,
-            @RequestParam List<Integer> userIds, @RequestParam Integer roleId) {
+            @RequestParam List<Integer> userId, @RequestParam Integer roleId) {
         try {
-            teamService.addTeamMembers(eventId, userIds, roleId);
+            teamService.addTeamMembers(eventId, userId, roleId);
 
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (IllegalArgumentException e) {
@@ -62,16 +62,15 @@ public class TeamController {
         }
     }
 
-    // Remove team member
     // Get team members
     @GetMapping
     public ResponseEntity<?> getTeamMembers(
             @PathVariable("eventId") Integer eventId,
             @RequestParam(defaultValue = "0") Integer pageNumber,
-            @RequestParam(defaultValue = "10")  Integer pageSize,
-            @RequestParam(defaultValue = "user.name")  String sortBy) {
+            @RequestParam(defaultValue = "10")  Integer pageSize
+            ) {
         try {
-            Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(sortBy).ascending());
+            Pageable paging = PageRequest.of(pageNumber, pageSize);
             Page<TeamMemberDTO> members = teamService.getTeamMembers(eventId, paging);
             return ResponseEntity.ok(members);
         } catch (IllegalArgumentException e) {

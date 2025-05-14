@@ -1,6 +1,5 @@
 package com.utem.event_hub_navigation;
 
-import com.utem.event_hub_navigation.EventCompletedReportEvent;
 import com.utem.event_hub_navigation.listener.ReportGenerationListener;
 import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.EventReportService;

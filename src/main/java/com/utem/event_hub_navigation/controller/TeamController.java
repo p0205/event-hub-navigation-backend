@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
+import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.service.TeamService;
 
 @RestController
@@ -67,8 +67,7 @@ public class TeamController {
     public ResponseEntity<?> getTeamMembers(
             @PathVariable("eventId") Integer eventId,
             @RequestParam(defaultValue = "0") Integer pageNumber,
-            @RequestParam(defaultValue = "10")  Integer pageSize
-            ) {
+            @RequestParam(defaultValue = "10") Integer pageSize) {
         try {
             Pageable paging = PageRequest.of(pageNumber, pageSize);
             Page<TeamMemberDTO> members = teamService.getTeamMembers(eventId, paging);
@@ -78,6 +77,29 @@ public class TeamController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Failed to get team members: " + e.getMessage());
         }
+    }
+
+    // search user to be assigned role
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUserToAssignedRole(@PathVariable("eventId") Integer eventId,
+            @RequestParam("query") String query, @RequestParam("roleId") Integer roleId) {
+
+        // if (users == null || users.isEmpty()) {
+        //     return ResponseEntity.notFound().build();
+        // }
+
+        // return ResponseEntity.ok(users);
+
+        try {
+            List<UserDTOByTeamSearch> users = teamService.searchUsers(eventId, query,roleId);
+
+            return ResponseEntity.ok(users);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Failed to get team members: " + e.getMessage());
+        }
+
     }
 
     @DeleteMapping("/{userId}")

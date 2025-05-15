@@ -36,6 +36,7 @@ import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
+import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.mapper.EventMapper;
 import com.utem.event_hub_navigation.mapper.UserMapper;
 import com.utem.event_hub_navigation.model.BudgetCategory;
@@ -266,7 +267,8 @@ public class EventServiceImpl implements EventService {
         // Users newOrganizer = null;
         // if (organizerId != null) {
         // newOrganizer = userRepository.findById(organizerId)
-        // .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "New Organizer Users
+        // .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "New Organizer
+        // Users
         // not found with ID: " + organizerId));
         // }
 
@@ -503,8 +505,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public ParticipantsDemographicsDTO getParticipantsDemographicsByEventId(Integer eventId) {
-        Event event = eventRepo.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
+        // Event event = eventRepo.findById(eventId)
+        // .orElseThrow(() -> new RuntimeException("Event not found"));
 
         int totalNumber = registrationRepo.countByEventId(eventId);
         Map<String, Long> facultyData = DataConversionUtil.convertObjectListToMap(
@@ -563,5 +565,6 @@ public class EventServiceImpl implements EventService {
         event.setStatus(EventStatus.COMPLETED);
         eventRepo.save(event);
     }
+
 
 }

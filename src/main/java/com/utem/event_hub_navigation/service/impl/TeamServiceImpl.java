@@ -1,6 +1,5 @@
 package com.utem.event_hub_navigation.service.impl;
 
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
+import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.Role;
 import com.utem.event_hub_navigation.model.TeamMember;
@@ -61,8 +61,7 @@ public class TeamServiceImpl implements TeamService {
             throw new Exception("Role not found");
         }
 
-
-        TeamMemberKey teamMemberKey = new TeamMemberKey(userId, eventId,roleId);
+        TeamMemberKey teamMemberKey = new TeamMemberKey(userId, eventId, roleId);
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberKey)
                 .user(user)
@@ -92,10 +91,10 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void addTeamMembers(Integer eventId, List<Integer> userIds, Integer roleId) throws Exception {
-        for(Integer userId : userIds) {
-           
-                addTeamMemberRole(eventId, userId, roleId);
-            
+        for (Integer userId : userIds) {
+
+            addTeamMemberRole(eventId, userId, roleId);
+
         }
     }
 
@@ -115,13 +114,17 @@ public class TeamServiceImpl implements TeamService {
 
         // Remove team member from the event
         TeamMemberKey teamMemberKey = TeamMemberKey.builder()
-                                                    .eventId(eventId)
-                                                    .userId(userId)
-                                                    .build();
-       
+                .eventId(eventId)
+                .userId(userId)
+                .build();
+
         teamMemberRepo.deleteById(teamMemberKey);
     }
 
-    // Implement the methods here
+    @Override
+    public List<UserDTOByTeamSearch> searchUsers(Integer eventId, String query, Integer roleId) {
+        String searchQuery = "%" + query.toLowerCase() + "%";
+        return teamMemberRepo.findSearchedUsersByTeamAndRole(eventId, searchQuery, roleId);
+    }
 
 }

@@ -2,6 +2,8 @@ package com.utem.event_hub_navigation.service;
 
 import java.util.List;
 
+
+
 import com.utem.event_hub_navigation.model.Venue;
 
 public interface VenueService {
@@ -13,5 +15,7 @@ public interface VenueService {
     List<Venue> getAllVenues();
 
     void deleteVenues(Integer venueId);
+
+    List<Venue> getVenuesByCapacity(Integer capacity);
 
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.model.Venue;
@@ -34,9 +35,19 @@ public class VenueController {
 
     @GetMapping
     public ResponseEntity<List<Venue>> getAllVenues() {
-        System.out.println("getAllVenues");
         List<Venue> venues = venueService.getAllVenues();
         return new ResponseEntity<>(venues, HttpStatus.OK);
+    }
+
+    @GetMapping("/capacity")
+    public ResponseEntity<?> getVenuesByCapacity(@RequestParam("capacity") Integer capacity){
+        try {
+            return new ResponseEntity<>(venueService.getVenuesByCapacity(capacity), HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{venueId}")

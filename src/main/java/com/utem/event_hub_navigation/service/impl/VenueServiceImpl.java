@@ -38,5 +38,10 @@ public class VenueServiceImpl implements VenueService {
         venueRepo.deleteById(venueId);
     }
 
+    @Override
+    public List<Venue> getVenuesByCapacity(Integer capacity) {
+        return venueRepo.findByCapacityGreaterThanEqual(capacity);
+    }
+
 
 }

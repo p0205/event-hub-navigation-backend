@@ -14,4 +14,6 @@ public interface BudgetCategoryService {
 
     BudgetCategory getBudgetCategoryById(Integer id);
 
+    List<BudgetCategory> getBudgetCategoryByNameLike(String name);
+
 }

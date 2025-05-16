@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.model.BudgetCategory;
@@ -28,8 +29,9 @@ public class BudgetCategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<BudgetCategory> createBudgetCategory(@RequestBody BudgetCategory budgetCategory) {
-        BudgetCategory createdBudgetCategory = budgetCategoryService.createBudgetCategory(budgetCategory);
+    public ResponseEntity<BudgetCategory> createBudgetCategory(@RequestBody String name) {
+        BudgetCategory request = BudgetCategory.builder().name(name).build();
+        BudgetCategory createdBudgetCategory = budgetCategoryService.createBudgetCategory(request);
         return new ResponseEntity<>(createdBudgetCategory, HttpStatus.CREATED);
     }
 
@@ -42,6 +44,14 @@ public class BudgetCategoryController {
     @GetMapping("/{id}")
     public ResponseEntity<BudgetCategory> getBudgetCategoryById(@PathVariable Integer id){
         BudgetCategory budgetCategory = budgetCategoryService.getBudgetCategoryById(id);
+        if(budgetCategory == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(budgetCategory, HttpStatus.OK);
+    }
+
+    @GetMapping("/byName")
+    public ResponseEntity<List<BudgetCategory>> getBudgetCategoryById(@RequestParam("name") String name){
+        List<BudgetCategory> budgetCategory = budgetCategoryService.getBudgetCategoryByNameLike(name);
         if(budgetCategory == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         return new ResponseEntity<>(budgetCategory, HttpStatus.OK);

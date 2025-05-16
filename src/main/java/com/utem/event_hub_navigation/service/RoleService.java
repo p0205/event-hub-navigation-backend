@@ -18,4 +18,8 @@ public interface RoleService {
     // get all roles
     List<Role> getAllRoles();
 
+    List<Role> getRolesByName(String name);
+
+    void deleteRole(Integer id);
+
 }

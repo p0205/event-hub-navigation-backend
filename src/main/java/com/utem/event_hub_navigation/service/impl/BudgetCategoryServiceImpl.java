@@ -42,6 +42,11 @@ public class BudgetCategoryServiceImpl implements BudgetCategoryService {
         return optional.get();
     }
 
+    @Override
+    public List<BudgetCategory> getBudgetCategoryByNameLike(String name) {
+       return budgetCategoryRepo.findByNameContains(name);
+    }
+
    
 
 }

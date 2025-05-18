@@ -17,7 +17,7 @@ import com.utem.event_hub_navigation.model.AttendanceKey;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.Registration;
-import com.utem.event_hub_navigation.model.Users;
+import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.AttendanceRepo;
 import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.SessionRepo;
@@ -98,7 +98,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Event not found with ID: " + qrPayload.getEventId()));
 
-        Users participant = userRepo.findById(participantId)
+        User participant = userRepo.findById(participantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Participants Users not found with ID: " + participantId));
 

@@ -48,7 +48,7 @@ import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.SessionVenue;
 import com.utem.event_hub_navigation.model.SessionVenueKey;
-import com.utem.event_hub_navigation.model.Users;
+import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.model.Registration;
 import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.repo.EventRepo;
@@ -325,7 +325,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<Event> getEventsByOrganizer(Integer organizerId) {
-        Users organizer = userRepo.findById(organizerId)
+        User organizer = userRepo.findById(organizerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Organizer Users not found with ID: " + organizerId));
 
@@ -369,7 +369,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventSimpleResponse> getEventsByEventOrganizerAndStatus(Integer organizerId, EventStatus status) {
-        Users organizer = userRepo.findById(organizerId)
+        User organizer = userRepo.findById(organizerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Organizer Users not found with ID: " + organizerId));
 
@@ -429,7 +429,7 @@ public class EventServiceImpl implements EventService {
             }
 
             // Query the database for users by email
-            List<Users> users = userRepo.findByEmailIn(emails);
+            List<User> users = userRepo.findByEmailIn(emails);
 
             // Format response
             List<UserDTO> result = users.stream().map(user -> {
@@ -453,9 +453,9 @@ public class EventServiceImpl implements EventService {
 
         List<UserDTO> results = new ArrayList<>();
         for (UserDTO dto : participants) {
-            Optional<Users> optionalUser = userRepo.findByEmail(dto.getEmail());
+            Optional<User> optionalUser = userRepo.findByEmail(dto.getEmail());
 
-            Users user;
+            User user;
 
             if (optionalUser.isPresent()) {
                 user = optionalUser.get();
@@ -538,7 +538,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepo.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        Users participant = userRepo.findById(participantId)
+        User participant = userRepo.findById(participantId)
                 .orElseThrow(() -> new RuntimeException("Participant not found"));
 
         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);

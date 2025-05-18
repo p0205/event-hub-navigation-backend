@@ -4,11 +4,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.utem.event_hub_navigation.dto.EmailCheckResponse;
+import com.utem.event_hub_navigation.dto.EmailCheckResult;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.mapper.UserMapper;
-import com.utem.event_hub_navigation.model.Users;
+import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.repo.UTeMStaffRepo;
+import com.utem.event_hub_navigation.repo.UTeMStudentRepo;
 import com.utem.event_hub_navigation.repo.UserRepo;
 import com.utem.event_hub_navigation.service.UserService;
 
@@ -17,23 +22,67 @@ public class UserServiceImpl implements UserService {
 
     private UserRepo userRepo;
     private UserMapper userMapper;
+    private PasswordEncoder passwordEncoder;
+    private UTeMStaffRepo utemStaffRepo;
+    private UTeMStudentRepo utemStudentRepo;
 
     @Autowired
-    public UserServiceImpl(UserRepo userRepo, UserMapper userMapper) {
+    public UserServiceImpl(UserRepo userRepo, UserMapper userMapper, PasswordEncoder passwordEncoder,
+            UTeMStaffRepo utemStaffRepo, UTeMStudentRepo utemStudentRepo) {
         this.userRepo = userRepo;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+        this.utemStaffRepo = utemStaffRepo;
+        this.utemStudentRepo = utemStudentRepo;
+    }
+
+    @Override
+    public EmailCheckResponse existInUTemDatabase(String email) {
+
+        if (userRepo.findByEmail(email).isPresent()) {
+            return new EmailCheckResponse(EmailCheckResult.USER_ALREADY_REGISTERED, null);
+        }
+
+        
+        UserDTO dto = null;
+        if (email.contains("student")) {
+            dto = userMapper.toUserDTO(utemStudentRepo.findByEmail(email)); // return UserDTO object
+        } else {
+            dto = userMapper.toUserDTO(utemStaffRepo.findByEmail(email));
+        }
+
+        if (dto == null) {
+            return new EmailCheckResponse(EmailCheckResult.EMAIL_NOT_FOUND, null);
+        }
+
+        return new EmailCheckResponse(EmailCheckResult.VALID_EMAIL, dto);
+    }
+
+    @Override
+    public boolean register(UserDTO dto, String phoneNo, String rawPassword) {
+        try {
+            String hashPassword = passwordEncoder.encode(rawPassword);
+            User user = userMapper.toUser(dto);
+            user.setPasswordHash(hashPassword);
+            user.setPhoneNo(phoneNo);
+            userRepo.save(user);
+            return true;
+        } catch (Exception e) {
+
+            return false;
+        }
     }
 
     @Override
     public List<UserDTO> getUsersByEmail(List<String> emails) {
 
-        List<Users> users = userRepo.findByEmailIn(emails);
+        List<User> users = userRepo.findByEmailIn(emails);
         return userMapper.toUserDTOs(users);
     }
 
     @Override
     public UserDTO getUserByEmail(String email) {
-        Optional<Users> user = userRepo.findByEmail(email);
+        Optional<User> user = userRepo.findByEmail(email);
         if (user.isEmpty()) {
             return null;
         }
@@ -43,7 +92,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDTO> getUserByNameLike(String name) {
-        List<Users> user = userRepo.findByNameContains(name);
+        List<User> user = userRepo.findByNameContains(name);
         if (user.isEmpty()) {
             return null;
         }
@@ -54,7 +103,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> findByEmailOrName(String query) {
 
-        List<Users> users = userRepo.findByNameContains(query);
+        List<User> users = userRepo.findByNameContains(query);
         if (users.isEmpty()) {
             users = userRepo.findByEmailContains(query);
             if (users.isEmpty()) {
@@ -65,11 +114,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Users getUserById(Integer userId){
-        Optional<Users> user = userRepo.findById(userId);
+    public User getUserById(Integer userId) {
+        Optional<User> user = userRepo.findById(userId);
         if (user.isEmpty()) {
             return null;
         }
         return user.get();
     }
+
 }

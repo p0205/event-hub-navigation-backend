@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.utem.event_hub_navigation.model.BudgetCategory;
-import com.utem.event_hub_navigation.model.Users;
+import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.repo.BudgetCategoryRepo;
 import com.utem.event_hub_navigation.repo.UserRepo;
@@ -24,7 +24,7 @@ public class EventMapperHelper {
     private BudgetCategoryRepo budgetCategoryRepository;
 
     @Named("mapUser")
-    public Users mapUser(Integer id) {
+    public User mapUser(Integer id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Users not found"));
     }

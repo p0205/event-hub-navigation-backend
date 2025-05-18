@@ -32,7 +32,7 @@ import jakarta.persistence.Table;
 @AllArgsConstructor
 
 
-public class Users {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

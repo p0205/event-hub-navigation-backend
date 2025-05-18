@@ -2,9 +2,9 @@ package com.utem.event_hub_navigation.controller;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,19 +13,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.dto.EmailCheckResponse;
+import com.utem.event_hub_navigation.dto.SignInRequest;
 import com.utem.event_hub_navigation.dto.SignUpRequest;
+import com.utem.event_hub_navigation.service.AuthService;
 import com.utem.event_hub_navigation.service.UserService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
 
-    @Autowired
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
+    private final AuthService authService;
 
     @GetMapping("/check-email")
     public ResponseEntity<?> existInUTemDatabase(@RequestParam String email) {
@@ -53,6 +55,19 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful"));
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Registration failed"));
+        }
+    }
+
+    @PostMapping("/sign-in")
+    public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
+
+        try {
+            String token = authService.signIn(req);
+            return ResponseEntity.status(HttpStatus.OK).body(token);
+        } catch (AuthenticationException authException) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.toString()));
         }
     }
 

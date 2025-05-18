@@ -1,6 +1,9 @@
 package com.utem.event_hub_navigation.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,11 +44,24 @@ public class RoleController {
     }
 
     // Remove role
-    // Get roles
+    // // Get roles
+    // @GetMapping
+    // public ResponseEntity<?> getRoles() {
+    //     try {
+    //         return ResponseEntity.ok(roleService.getAllRoles());
+    //     } catch (Exception e) {
+    //         return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+    //     }
+    // }
+
     @GetMapping
-    public ResponseEntity<?> getRoles() {
+    public ResponseEntity<?> getRoles(
+            @RequestParam(defaultValue = "0") Integer pageNumber,
+            @RequestParam(defaultValue = "10") Integer pageSize)
+    {
         try {
-            return ResponseEntity.ok(roleService.getAllRoles());
+            Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("name"));
+            return ResponseEntity.ok(roleService.getAllRoles(paging));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {

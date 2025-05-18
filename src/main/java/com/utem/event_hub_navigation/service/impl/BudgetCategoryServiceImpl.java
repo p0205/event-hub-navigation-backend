@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.utem.event_hub_navigation.model.BudgetCategory;
@@ -45,6 +47,12 @@ public class BudgetCategoryServiceImpl implements BudgetCategoryService {
     @Override
     public List<BudgetCategory> getBudgetCategoryByNameLike(String name) {
        return budgetCategoryRepo.findByNameContains(name);
+    }
+
+    @Override
+    public Page<BudgetCategory> getAllBudgetCategoriesByPage(Pageable pageable) {
+        
+       return budgetCategoryRepo.findAll(pageable);
     }
 
    

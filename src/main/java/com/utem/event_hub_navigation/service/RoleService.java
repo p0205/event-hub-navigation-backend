@@ -2,6 +2,9 @@ package com.utem.event_hub_navigation.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.utem.event_hub_navigation.model.Role;
 
 public interface RoleService {
@@ -21,5 +24,7 @@ public interface RoleService {
     List<Role> getRolesByName(String name);
 
     void deleteRole(Integer id);
+
+    Page<Role> getAllRoles(Pageable pageable);
 
 }

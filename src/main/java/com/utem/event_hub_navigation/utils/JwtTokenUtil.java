@@ -32,27 +32,26 @@ public class JwtTokenUtil {
         JWT_EXPIRATION_MS = jwtExpirationMs;
     }
 
-
-
-    public static String generateToken(String email,String role){
+    public static String generateToken(String email, String role) {
         // Header.Payload.Signature
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
         return Jwts.builder()
-                        .subject(email)
-                        .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
-                        .issuedAt(new Date())
-                        .claim("role", role)
-                        .signWith(key)
-                        .compact();
-        
+                .subject(email)
+                .expiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION_MS))
+                .issuedAt(new Date())
+                .claim("role", role)
+                .signWith(key)
+                .compact();
+
     }
 
-    public static boolean validateToken(String token){
+    public static boolean validateToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        System.out.println("validateToken");
         try {
             Jwts.parser()
-                .decryptWith(key)
-                .build().parseSignedClaims(token);
+                    .verifyWith(key)
+                    .build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -60,13 +59,20 @@ public class JwtTokenUtil {
         }
     }
 
-    public static String getEmailFromToken(String token){
+    public static String getEmailFromToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-        Claims claims = 
-                Jwts.parser()
-                    .decryptWith(key)
-                    .build().parseSignedClaims(token).getPayload();
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build().parseSignedClaims(token).getPayload();
 
         return claims.getSubject();
+    }
+
+    public static String getRoleFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build().parseSignedClaims(token).getPayload();
+        return claims.get("role", String.class);
     }
 }

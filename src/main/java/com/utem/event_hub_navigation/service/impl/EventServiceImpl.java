@@ -36,7 +36,6 @@ import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
-import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.mapper.EventMapper;
 import com.utem.event_hub_navigation.mapper.UserMapper;
 import com.utem.event_hub_navigation.model.BudgetCategory;

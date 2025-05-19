@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.utem.event_hub_navigation.dto.EmailCheckResponse;
 import com.utem.event_hub_navigation.dto.EmailCheckResult;
 import com.utem.event_hub_navigation.dto.UserDTO;
+import com.utem.event_hub_navigation.dto.UserSignUpDTO;
 import com.utem.event_hub_navigation.mapper.UserMapper;
 import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.UTeMStaffRepo;
@@ -43,12 +45,11 @@ public class UserServiceImpl implements UserService {
             return new EmailCheckResponse(EmailCheckResult.USER_ALREADY_REGISTERED, null);
         }
 
-        
-        UserDTO dto = null;
+        UserSignUpDTO dto = null;
         if (email.contains("student")) {
-            dto = userMapper.toUserDTO(utemStudentRepo.findByEmail(email)); // return UserDTO object
+            dto = userMapper.toUserSignUpDTO(utemStudentRepo.findByEmail(email)); // return UserDTO object
         } else {
-            dto = userMapper.toUserDTO(utemStaffRepo.findByEmail(email));
+            dto = userMapper.toUserSignUpDTO(utemStaffRepo.findByEmail(email));
         }
 
         if (dto == null) {
@@ -59,12 +60,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean register(UserDTO dto, String phoneNo, String rawPassword) {
+    public boolean register(String email, String phoneNo, String rawPassword) {
         try {
+            User user = userMapper.toUser(utemStudentRepo.findByEmail(email));
             String hashPassword = passwordEncoder.encode(rawPassword);
-            User user = userMapper.toUser(dto);
+            user.setCreatedAt(LocalDate.now());
             user.setPasswordHash(hashPassword);
             user.setPhoneNo(phoneNo);
+            System.out.println(user.toString());
             userRepo.save(user);
             return true;
         } catch (Exception e) {

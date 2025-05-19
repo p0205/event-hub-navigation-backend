@@ -10,7 +10,7 @@ public interface UserService {
 
     EmailCheckResponse existInUTemDatabase(String email);
 
-    boolean register(UserDTO dto, String phoneNo, String rawPassword);
+    boolean register(String email, String phoneNo, String rawPassword);
 
     List<UserDTO> getUsersByEmail(List<String> emails);
 

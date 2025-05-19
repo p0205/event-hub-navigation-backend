@@ -1,8 +1,11 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +53,7 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<?> signUp(@RequestBody SignUpRequest req) {
 
-        boolean success = userService.register(req.getUserDTO(), req.getPhoneNo(), req.getRawPassword());
+        boolean success = userService.register(req.getEmail(), req.getPhoneNo(), req.getRawPassword());
         if (success) {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful"));
         } else {
@@ -63,12 +66,37 @@ public class AuthController {
 
         try {
             String token = authService.signIn(req);
-            return ResponseEntity.status(HttpStatus.OK).body(token);
+            ResponseCookie cookie = ResponseCookie.from("jwt", token)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .sameSite("Strict")
+                    .maxAge(Duration.ofHours(1)) // Match your JWT expiry
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                    .body("Login successful");
         } catch (AuthenticationException authException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.toString()));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .sameSite("Strict")
+                .maxAge(0) // Expire immediately
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body("Logout successful");
     }
 
 }

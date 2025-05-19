@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class EmailCheckResponse {
     private EmailCheckResult result;
-    private UserDTO userDTO;  // present only if VALID_EMAIL
+    private UserSignUpDTO userDTO;  // present only if VALID_EMAIL
     // constructor, getters
 }

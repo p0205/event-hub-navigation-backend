@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.utem.event_hub_navigation.dto.EmailCheckResponse;
 import com.utem.event_hub_navigation.dto.SignInRequest;
 import com.utem.event_hub_navigation.dto.SignUpRequest;
+import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.service.AuthService;
 import com.utem.event_hub_navigation.service.UserService;
 
@@ -63,7 +64,6 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
-        System.out.println("Receing request..");
         try {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
@@ -74,9 +74,10 @@ public class AuthController {
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry
                     .build();
                    
+            UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body("Login successful");
+                    .body(authenticatUserDTO);
         } catch (AuthenticationException authException) {
           
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));

@@ -21,5 +21,4 @@ public interface BudgetCategoryService {
 
     Page<BudgetCategory> getAllBudgetCategoriesByPage(Pageable pageable);
 
-  
 }

@@ -16,6 +16,7 @@ import com.utem.event_hub_navigation.utils.JwtTokenUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -52,6 +53,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Extract token if it starts with "Bearer "
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7); // Remove "Bearer " prefix
+        }
+        // 2. Check for Cookie
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookie.getName().equals("jwt")) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }

@@ -63,23 +63,25 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
-
+        System.out.println("Receing request..");
         try {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(true)
+                    .secure(false)
                     .path("/")
                     .sameSite("Strict")
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry
                     .build();
-
+                   
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body("Login successful");
         } catch (AuthenticationException authException) {
+          
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
         } catch (Exception e) {
+          
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.toString()));
         }
     }

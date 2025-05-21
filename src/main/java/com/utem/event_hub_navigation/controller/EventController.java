@@ -119,6 +119,7 @@ public class EventController {
         // The fetched event will include the associated organizer (potentially lazily
         // loaded)
         String eventName = eventService.getEventName(id);
+       
         if (eventName != null)
             return ResponseEntity.ok(eventName);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -254,6 +255,7 @@ public class EventController {
     // Get calender events to be displayed
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
+        System.out.println("Receiving request");
         try {
             return ResponseEntity.ok(eventService.getCalendarEvent(userId));
         } catch (IllegalArgumentException e) {

@@ -64,6 +64,7 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
+        System.out.println("Receiving sign-in request");
         try {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)

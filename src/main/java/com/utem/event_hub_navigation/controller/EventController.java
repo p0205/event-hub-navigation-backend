@@ -255,7 +255,6 @@ public class EventController {
     // Get calender events to be displayed
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
-        System.out.println("Receiving request");
         try {
             return ResponseEntity.ok(eventService.getCalendarEvent(userId));
         } catch (IllegalArgumentException e) {
@@ -264,5 +263,9 @@ public class EventController {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
+
+    //Get Participants' Upcoming Events
+    //Get Participants' Past Events
+    
 
 }

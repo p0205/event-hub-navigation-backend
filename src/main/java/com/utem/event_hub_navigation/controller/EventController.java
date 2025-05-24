@@ -252,6 +252,7 @@ public class EventController {
         }
     }
 
+    // PARTICIPANT APIs
     // Get calender events to be displayed
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
@@ -265,7 +266,39 @@ public class EventController {
     }
 
     //Get Participants' Upcoming Events
+    @GetMapping("/participant/upcoming-events")
+    public ResponseEntity<?> getParticipantUpcomingEvents(@RequestParam("userId") Integer userId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsUpcomingEvents(userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
     //Get Participants' Past Events
+    @GetMapping("/participant/past-events")
+    public ResponseEntity<?> getParticipantPastEvents(@RequestParam("userId") Integer userId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsPastEvents(userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    //Get Participants' Event Details
+    @GetMapping("/participant/{eventId}")
+    public ResponseEntity<?> getParticipantEventDetails(@PathVariable("eventId") Integer eventId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantEventDetails(eventId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
     
 
 }

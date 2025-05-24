@@ -2,10 +2,12 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +35,10 @@ import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetails;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetailsSessionDTO;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetailsVenueDTO;
+import com.utem.event_hub_navigation.dto.ParticipantEventOverviewResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
@@ -546,15 +552,6 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception {
-        try {
-            return eventRepo.findCalendarEntriesByOrganizerId(userID);
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
-    }
-
-    @Override
     public List<Event> getOverdueActiveEvents() {
         return eventRepo.findByEndDateTimeBeforeAndStatus(LocalDateTime.now(), EventStatus.ACTIVE);
     }
@@ -566,4 +563,104 @@ public class EventServiceImpl implements EventService {
     }
 
 
-}
+    // PARTICIPANTS APIs
+    // Get calendar event data 
+    @Override
+    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception {
+        try {
+            return eventRepo.findCalendarEntriesByOrganizerId(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    // Get participant's upcoming events
+    @Override
+    public List<ParticipantEventOverviewResponse> getParticipantsUpcomingEvents(Integer userID) throws Exception {
+        try {
+            return registrationRepo.fetchParticipantUpcomingEvents(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+     // Get participant's past events
+    @Override
+    public List<ParticipantEventOverviewResponse> getParticipantsPastEvents(Integer userID) throws Exception {
+        try {
+            return registrationRepo.fetchParticipantPastEvents(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    @Override
+    public ParticipantEventDetails getParticipantEventDetails(Integer eventId) throws Exception {
+    
+        try {
+            List<Object[]> rows = eventRepo.findEventDetailsById(eventId);
+            ParticipantEventDetails event = new ParticipantEventDetails();
+            Map<Integer, ParticipantEventDetailsSessionDTO> sessionMap = new HashMap<>();
+    
+            for (Object[] row : rows) {
+                if (event.getId() == null) {
+                    event.setId((Integer) row[0]);
+                    event.setEventName((String) row[1]);
+                    event.setDescription((String) row[2]);
+    
+                    java.sql.Date sqlDate = (java.sql.Date) row[3];
+                    event.setRegisterDate(sqlDate != null ? sqlDate.toLocalDate() : null);
+    
+                    java.sql.Timestamp startTimestamp = (java.sql.Timestamp) row[4];
+                    event.setStartDateTime(startTimestamp != null ? startTimestamp.toLocalDateTime() : null);
+    
+                    java.sql.Timestamp endTimestamp = (java.sql.Timestamp) row[5];
+                    event.setEndDateTime(endTimestamp != null ? endTimestamp.toLocalDateTime() : null);
+    
+                    event.setOrganizerName((String) row[6]);
+                    event.setPicName((String) row[7]);
+                    event.setPicContact((String) row[8]);
+                }
+    
+                Integer sessionId = (Integer) row[9];
+                if (sessionId != null) {
+                    ParticipantEventDetailsSessionDTO session = sessionMap.get(sessionId);
+                    if (session == null) {
+                        session = new ParticipantEventDetailsSessionDTO();
+                        session.setId(sessionId);
+                        session.setSessionName((String) row[10]);
+    
+                        java.sql.Timestamp sessionStartTimestamp = (java.sql.Timestamp) row[11];
+                        session.setStartDateTime(sessionStartTimestamp != null ? sessionStartTimestamp.toLocalDateTime() : null);
+    
+                        java.sql.Timestamp sessionEndTimestamp = (java.sql.Timestamp) row[12];
+                        session.setEndDateTime(sessionEndTimestamp != null ? sessionEndTimestamp.toLocalDateTime() : null);
+    
+                        sessionMap.put(sessionId, session);
+                    }
+    
+                    Integer venueId = (Integer) row[13];
+                    if (venueId != null) {
+                        ParticipantEventDetailsVenueDTO venue = new ParticipantEventDetailsVenueDTO();
+                        venue.setId(venueId);
+                        venue.setName((String) row[14]);
+                    
+                        // Check if this venue is already added
+                        boolean venueExists = session.getVenues().stream()
+                            .anyMatch(v -> v.getId().equals(venueId));
+                        if (!venueExists) {
+                            session.getVenues().add(venue);
+                        }
+                    }
+                    
+                }
+            }
+    
+            event.setSessions(new ArrayList<>(sessionMap.values()));
+            return event;
+    
+        } catch (Exception e) {
+            throw new Exception("Error fetching event details: " + e.getMessage(), e);
+        }
+    }
+}    

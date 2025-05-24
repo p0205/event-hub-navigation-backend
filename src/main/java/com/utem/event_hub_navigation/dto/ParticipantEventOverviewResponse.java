@@ -1,17 +1,17 @@
 package com.utem.event_hub_navigation.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+public interface ParticipantEventOverviewResponse {
 
-import lombok.Builder;
-import lombok.Data;
+    Integer getId();
 
-@Data
-@Builder
-public class ParticipantEventOverviewResponse {
+    String getEventName();
 
-    private Integer id;
-    private String eventName;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    LocalDateTime getStartDateTime();
+
+    LocalDateTime getEndDateTime();
+
+    LocalDate getRegisterDate();
 }

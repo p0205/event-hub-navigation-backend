@@ -10,6 +10,8 @@ import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetails;
+import com.utem.event_hub_navigation.dto.ParticipantEventOverviewResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
@@ -65,10 +67,17 @@ public interface EventService {
 
     boolean removeParticipant(Integer eventId, Integer participantId);
 
-    List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception;
-
     List<Event> getOverdueActiveEvents();
 
     void markEventsAsCompleted(Event event);
+
+    // PARTICPANT Services
+    List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception;
+
+    List<ParticipantEventOverviewResponse> getParticipantsUpcomingEvents(Integer userID) throws Exception;
+
+    List<ParticipantEventOverviewResponse> getParticipantsPastEvents(Integer userID) throws Exception;
+
+    public ParticipantEventDetails getParticipantEventDetails(Integer eventId) throws Exception;
 
 }

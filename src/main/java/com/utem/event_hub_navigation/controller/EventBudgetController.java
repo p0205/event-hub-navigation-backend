@@ -11,11 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utem.event_hub_navigation.dto.AddEventExpenseDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.service.EventBudgetService;
 
 @RestController
-@RequestMapping("/events/{eventId}/budget")
+@RequestMapping("/api/events/{eventId}/budget")
 
 public class EventBudgetController {
 
@@ -38,6 +39,20 @@ public class EventBudgetController {
             return ResponseEntity.internalServerError().body("Failed to add budget: " + e.getMessage());
         }
     }
+
+        // Add budget
+        @PostMapping("/newExpense")
+        public ResponseEntity<?> addNewExpense(@PathVariable("eventId") Integer eventId, @RequestBody AddEventExpenseDTO addEventExpenseDTO) {
+            try {
+                eventBudgetService.addNewExpense(eventId, addEventExpenseDTO);
+                return ResponseEntity.status(HttpStatus.CREATED).build();
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("Failed to add new expense: " + e.getMessage());
+            }
+        }
+    
 
     // Delete budget
     @DeleteMapping("/{budgetId}")

@@ -19,7 +19,7 @@ import com.utem.event_hub_navigation.model.Role;
 import com.utem.event_hub_navigation.service.RoleService;
 
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/api/role")
 public class RoleController {
 
     private final RoleService roleService;
@@ -45,16 +45,16 @@ public class RoleController {
 
     // Remove role
     // // Get roles
-    // @GetMapping
-    // public ResponseEntity<?> getRoles() {
-    //     try {
-    //         return ResponseEntity.ok(roleService.getAllRoles());
-    //     } catch (Exception e) {
-    //         return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
-    //     }
-    // }
-
     @GetMapping
+    public ResponseEntity<?> getRoles() {
+        try {
+            return ResponseEntity.ok(roleService.getAllRoles());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/inPages")
     public ResponseEntity<?> getRoles(
             @RequestParam(defaultValue = "0") Integer pageNumber,
             @RequestParam(defaultValue = "10") Integer pageSize)

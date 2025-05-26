@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
@@ -20,6 +21,7 @@ import com.utem.event_hub_navigation.service.RoleService;
 import com.utem.event_hub_navigation.service.TeamService;
 import com.utem.event_hub_navigation.service.UserService;
 
+@Transactional
 @Service
 public class TeamServiceImpl implements TeamService {
 
@@ -41,33 +43,23 @@ public class TeamServiceImpl implements TeamService {
 
     // Add team member
     @Override
-    public void addTeamMemberRole(Integer eventId, Integer userId, Integer roleId) throws Exception {
+    public void addTeamMemberRole(Event event, Role role,  Integer userId) throws Exception {
 
         // Check if the user exists
         User user = userService.getUserById(userId);
         if (user == null) {
             throw new Exception("Users not found");
         }
-
-        // Check if the event exists
-        Event event = eventService.getEventById(eventId);
-        if (event == null) {
-            throw new Exception("Event not found");
-        }
-
-        // Check if the role exists
-        Role role = roleService.getRoleById(roleId);
-        if (role == null) {
-            throw new Exception("Role not found");
-        }
-
-        TeamMemberKey teamMemberKey = new TeamMemberKey(userId, eventId, roleId);
+        TeamMemberKey teamMemberKey = new TeamMemberKey(event.getId(),user.getId(),  role.getId());
+        
+    
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberKey)
                 .user(user)
                 .event(event)
+                .role(role)
                 .build();
-
+               
         // Add team member to the event
         teamMemberRepo.save(teamMember);
     }
@@ -90,9 +82,22 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public void addTeamMembers(Integer eventId, List<Integer> userIds, Integer roleId) throws Exception {
+
+        // Check if the event exists
+        Event event = eventService.getEventById(eventId);
+        if (event == null) {
+            throw new Exception("Event not found");
+        }
+
+        // Check if the role exists
+        Role role = roleService.getRoleById(roleId);
+        if (role == null) {
+            throw new Exception("Role not found");
+        }
+
         for (Integer userId : userIds) {
 
-            addTeamMemberRole(eventId, userId, roleId);
+            addTeamMemberRole(event, role, userId);
 
         }
     }
@@ -111,13 +116,8 @@ public class TeamServiceImpl implements TeamService {
             throw new RuntimeException("Users not found");
         }
 
-        // Remove team member from the event
-        TeamMemberKey teamMemberKey = TeamMemberKey.builder()
-                .eventId(eventId)
-                .userId(userId)
-                .build();
-
-        teamMemberRepo.deleteById(teamMemberKey);
+        teamMemberRepo.deleteAllByEventAndUser(eventId, userId);
+        System.out.println("Deleted successfully.");
     }
 
     @Override

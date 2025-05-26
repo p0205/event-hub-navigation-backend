@@ -24,7 +24,7 @@ import com.utem.event_hub_navigation.service.AttendanceService;
 import jakarta.persistence.EntityNotFoundException;
 
 @RestController
-@RequestMapping("/events/{eventId}/attendance/{sessionId}")
+@RequestMapping("/api/events/{eventId}/attendance/{sessionId}")
 public class AttendanceController {
 
     private AttendanceService attendanceService;

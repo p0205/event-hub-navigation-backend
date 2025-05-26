@@ -2,7 +2,6 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -540,14 +539,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public boolean removeParticipant(Integer eventId, Integer participantId) {
-        Event event = eventRepo.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        User participant = userRepo.findById(participantId)
-                .orElseThrow(() -> new RuntimeException("Participant not found"));
-
-        Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
-        registrationRepo.delete(registration);
+        registrationRepo.deleteByUserIdUserId(eventId, participantId);
         return true;
     }
 
@@ -651,8 +644,7 @@ public class EventServiceImpl implements EventService {
                         if (!venueExists) {
                             session.getVenues().add(venue);
                         }
-                    }
-                    
+                    }                    
                 }
             }
     

@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.impl.EventReportServiceImpl;
 
-@RequestMapping("/{eventId}/report")
+@RequestMapping("/api/{eventId}/report")
 @RestController
 public class EventReportController {
 
@@ -33,6 +34,19 @@ public class EventReportController {
             headers.setContentLength(pdfBytes.length);
             
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/budget")
+    public ResponseEntity<?> getEventBudgetReport(@PathVariable Integer eventId,
+            @RequestParam(value = "format", defaultValue = "pdf") String format) {
+        try {
+            eventReportService.storeReport(eventId, ReportType.BUDGET);
+          
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }

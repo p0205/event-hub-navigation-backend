@@ -22,7 +22,7 @@ import com.utem.event_hub_navigation.model.BudgetCategory;
 import com.utem.event_hub_navigation.service.BudgetCategoryService;
 
 @RestController
-@RequestMapping("/budgetCategory")
+@RequestMapping("/api/budgetCategory")
 public class BudgetCategoryController {
 
     private BudgetCategoryService budgetCategoryService;

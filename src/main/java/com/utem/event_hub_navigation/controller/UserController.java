@@ -15,7 +15,7 @@ import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.service.UserService;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;

@@ -47,7 +47,7 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                 JOIN session s ON s.event_id = e.id
                 LEFT JOIN session_venue sv ON sv.session_id = s.id
                 LEFT JOIN venue v ON v.id = sv.venue_id
-                WHERE e.user_id = :organizerId AND e.status = 'ACTIVE'
+                WHERE e.user_id = :organizerId AND e.status = 'ACTIVE' AND s.start_date_time >= NOW()
                 GROUP BY s.id
             """, nativeQuery = true)
     List<CalendarEventDTO> findCalendarEntriesByOrganizerId(@Param("organizerId") Integer organizerId);

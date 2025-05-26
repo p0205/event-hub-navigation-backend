@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.utem.event_hub_navigation.dto.AddEventExpenseDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.model.BudgetCategory;
 import com.utem.event_hub_navigation.model.Event;
@@ -26,13 +27,33 @@ public class EventBudgetServiceImpl implements EventBudgetService {
     private final BudgetCategoryService budgetCategoryService;
 
     @Autowired
-    public EventBudgetServiceImpl(EventBudgetRepo eventBudgetRepo, EventService eventService, BudgetCategoryService budgetCategoryService) {
+    public EventBudgetServiceImpl(EventBudgetRepo eventBudgetRepo, EventService eventService,
+            BudgetCategoryService budgetCategoryService) {
         this.eventBudgetRepo = eventBudgetRepo;
         this.eventService = eventService;
         this.budgetCategoryService = budgetCategoryService;
     }
 
-    // Add budget 
+    // Add budget
+    @Override
+    public void addNewExpense(Integer eventId, AddEventExpenseDTO addEventExpenseDTO) throws Exception {
+
+        EventBudgetKey eventBudgetKey = EventBudgetKey.builder()
+                .eventId(eventId)
+                .budgetId(addEventExpenseDTO.getBudgetCategoryId())
+                .build();
+
+        Optional<EventBudget> optExistingEventBudget = eventBudgetRepo.findById(eventBudgetKey);
+        if (optExistingEventBudget.isPresent()) {
+            EventBudget eventBudget = optExistingEventBudget.get();
+            eventBudget.setAmountSpent(eventBudget.getAmountSpent() + addEventExpenseDTO.getAmount());
+            eventBudgetRepo.save(eventBudget);
+
+        } else {
+            throw new Exception("Budget doesn't exists for this event");
+        }
+    }
+
     @Override
     public void addBudget(Integer eventId, EventBudgetDTO eventBudgetDTO) throws Exception {
 
@@ -41,27 +62,27 @@ public class EventBudgetServiceImpl implements EventBudgetService {
             throw new Exception("Event not found");
         }
 
-        BudgetCategory budgetCategory = budgetCategoryService.getBudgetCategoryById(eventBudgetDTO.getBudgetCategoryId());
+        BudgetCategory budgetCategory = budgetCategoryService
+                .getBudgetCategoryById(eventBudgetDTO.getBudgetCategoryId());
         if (budgetCategory == null) {
             throw new Exception("Budget category not found");
         }
 
-        EventBudgetKey eventBudgetKey =  EventBudgetKey.builder()
+        EventBudgetKey eventBudgetKey = EventBudgetKey.builder()
                 .eventId(eventId)
                 .budgetId(eventBudgetDTO.getBudgetCategoryId())
-                .build();  
-                         
+                .build();
+
         Optional<EventBudget> existingEventBudget = eventBudgetRepo.findById(eventBudgetKey);
-        if(existingEventBudget.isPresent()) {
+        if (existingEventBudget.isPresent()) {
             throw new Exception("Budget already exists for this event");
         }
-
 
         EventBudget eventBudget = EventBudget.builder()
                 .id(eventBudgetKey)
                 .amountAllocated(eventBudgetDTO.getAmountAllocated())
                 .amountSpent(eventBudgetDTO.getAmountSpent())
-                .build();   
+                .build();
 
         eventBudgetRepo.save(eventBudget);
     }
@@ -87,12 +108,12 @@ public class EventBudgetServiceImpl implements EventBudgetService {
         List<EventBudget> eventBudgets = eventBudgetRepo.findByEvent(event);
         return eventBudgets.stream()
                 .map(eventBudget -> EventBudgetDTO.builder()
-                                                    .amountAllocated(eventBudget.getAmountAllocated())
-                                                    .amountSpent(eventBudget.getAmountSpent())
-                                                    .budgetCategoryId(eventBudget.getBudgetCategory().getId())
-                                                    .budgetCategoryName(eventBudget.getBudgetCategory().getName())
-                                                
-                                                    .build())
+                        .amountAllocated(eventBudget.getAmountAllocated())
+                        .amountSpent(eventBudget.getAmountSpent())
+                        .budgetCategoryId(eventBudget.getBudgetCategory().getId())
+                        .budgetCategoryName(eventBudget.getBudgetCategory().getName())
+
+                        .build())
                 .collect(Collectors.toList());
     }
 }

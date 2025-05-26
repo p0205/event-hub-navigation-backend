@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.utem.event_hub_navigation.dto.ParticipantEventOverviewResponse;
 import com.utem.event_hub_navigation.model.Event;
@@ -76,7 +78,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
                                    r.register_date AS registerDate
                             FROM Registration r
                             JOIN Event e ON e.id = r.event_id
-                            WHERE r.user_id = :userId && e.end_date_time <= NOW()
+                            WHERE r.user_id = :userId && e.end_date_time > NOW()
 
                         """, nativeQuery = true)
         List<ParticipantEventOverviewResponse> fetchParticipantUpcomingEvents(@Param("userId") Integer userId);
@@ -89,10 +91,18 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
                        r.register_date AS registerDate
                 FROM Registration r
                 JOIN Event e ON e.id = r.event_id
-                WHERE r.user_id = :userId && e.end_date_time > NOW()
+                WHERE r.user_id = :userId && e.end_date_time <= NOW()
 
             """, nativeQuery = true)
 List<ParticipantEventOverviewResponse> fetchParticipantPastEvents(@Param("userId") Integer userId);
+
+@Modifying
+@Transactional
+@Query(value = """
+        DELETE FROM registration 
+        WHERE event_id = :eventId AND user_id = :userId
+        """,nativeQuery = true)
+        void deleteByUserIdUserId(@Param("eventId") Integer eventId, @Param("userId") Integer participantId);
 
 
 }

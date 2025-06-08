@@ -21,6 +21,8 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
 
         Registration findByEventAndParticipant(Event event, User user);
 
+        Registration findByEvent_IdAndParticipant_Id(Integer eventId, Integer userId);
+
         Page<Registration> findByEvent(Event event, Pageable pageable);
 
         Boolean existsByEventAndParticipant(Event event, User user);

@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -72,12 +73,19 @@ public interface EventService {
     void markEventsAsCompleted(Event event);
 
     // PARTICPANT Services
+
+    public List<CalendarEventDTO> getAllCalendarEventByMonth(LocalDateTime startDateTime,
+            LocalDateTime endDateTime) throws Exception;
+
     List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception;
 
     List<ParticipantEventOverviewResponse> getParticipantsUpcomingEvents(Integer userID) throws Exception;
 
     List<ParticipantEventOverviewResponse> getParticipantsPastEvents(Integer userID) throws Exception;
 
-    public ParticipantEventDetails getParticipantEventDetails(Integer eventId) throws Exception;
+     List<CalendarEventDTO> getParticipantsEventsByMonth(Integer userID,  LocalDateTime startDateTime,
+    LocalDateTime endDateTime) throws Exception;
+
+    public ParticipantEventDetails getEventDetails(Integer eventId) throws Exception;
 
 }

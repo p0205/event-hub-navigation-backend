@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -252,8 +253,20 @@ public class EventController {
         }
     }
 
-    // PARTICIPANT APIs
+    // MOBILE APP APIs
     // Get calender events to be displayed
+    @GetMapping("/calendar/all-events")
+    public ResponseEntity<?> getAllEventsByMonth( @RequestParam("startDateTime") LocalDateTime startDateTime,
+    @RequestParam("endDateTime") LocalDateTime endDateTime) {
+        try {
+            return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime,endDateTime));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+    
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
         try {
@@ -287,12 +300,26 @@ public class EventController {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
-
-    //Get Participants' Event Details
-    @GetMapping("/participant/{eventId}")
-    public ResponseEntity<?> getParticipantEventDetails(@PathVariable("eventId") Integer eventId) {
+    //Get Participants' Past Events
+    @GetMapping("/participant/calendar-events")
+    public ResponseEntity<?> getParticipantEventsByMonth(
+            @RequestParam("userId") Integer userId,
+            @RequestParam("startDateTime") LocalDateTime startDateTime,
+            @RequestParam("endDateTime") LocalDateTime endDateTime) {
         try {
-            return ResponseEntity.ok(eventService.getParticipantEventDetails(eventId));
+            return ResponseEntity.ok(eventService.getParticipantsEventsByMonth(userId, startDateTime, endDateTime));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    //Get Event Details
+    @GetMapping("/{eventId}/details")
+    public ResponseEntity<?> getEventDetails(@PathVariable("eventId") Integer eventId) {
+        try {
+            return ResponseEntity.ok(eventService.getEventDetails(eventId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {

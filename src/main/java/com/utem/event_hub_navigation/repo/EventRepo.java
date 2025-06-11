@@ -52,6 +52,7 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
             """, nativeQuery = true)
     List<CalendarEventDTO> findCalendarEntriesByOrganizerId(@Param("organizerId") Integer organizerId);
 
+
     List<Event> findByEndDateTimeBeforeAndStatus(LocalDateTime nowDateTime, EventStatus eventStatus);
 
     /**
@@ -87,4 +88,29 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
 
                                     """, nativeQuery = true)
     List<Object[]> findEventDetailsById(@Param("eventId") int eventId);
+
+
+    @Query(value = """
+        SELECT
+            e.id AS eventId,
+            e.name AS eventName,
+            s.id AS sessionId,
+            s.session_name AS sessionName,
+            s.start_date_time AS startDateTime,
+            s.end_date_time AS endDateTime,
+            COALESCE(GROUP_CONCAT(DISTINCT v.name SEPARATOR ', '), '') AS venueNames
+        FROM registration r
+        JOIN event e ON r.event_id = e.id
+        JOIN session s ON s.event_id = e.id
+        LEFT JOIN session_venue sv ON sv.session_id = s.id
+        LEFT JOIN venue v ON v.id = sv.venue_id
+
+        WHERE 
+           s.start_date_time >= :startDateTime
+            AND s.start_date_time <= :endDateTime
+        GROUP BY s.id
+    """, nativeQuery = true)
+List<CalendarEventDTO> fetchAllCalendarEventByMonth(
+    @Param("startDateTime") LocalDateTime startDateTime,
+    @Param("endDateTime") LocalDateTime endDateTime);
 }

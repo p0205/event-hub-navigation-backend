@@ -2,10 +2,8 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,12 +23,6 @@ import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.text.TabSettings;
-import com.itextpdf.text.TabStop;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
 import com.utem.event_hub_navigation.dto.AttendanceReportOverview;
@@ -55,7 +47,7 @@ import com.utem.event_hub_navigation.repo.SessionRepo;
 import com.utem.event_hub_navigation.service.EventBudgetService;
 import com.utem.event_hub_navigation.service.EventReportService;
 import com.utem.event_hub_navigation.utils.DateHelper;
-import com.utem.event_hub_navigation.utils.PieChartGenerator;
+import com.utem.event_hub_navigation.utils.ReportGeneratorUtils;
 import com.utem.event_hub_navigation.utils.SupabaseStorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -210,17 +202,19 @@ public class EventReportServiceImpl implements EventReportService {
                 document.add(overviewHeader);
 
                 // overview content
-                addKeyValueLine(document, "Event Duration", DateHelper.formatDate(report.getEventStartDateTime())
-                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()), 0);
-                addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
-                addKeyValueLine(document, "Total Expected Participants",
+                ReportGeneratorUtils.addKeyValueLine(document, "Event Duration",
+                                DateHelper.formatDate(report.getEventStartDateTime())
+                                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()),
+                                0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Total Expected Participants",
                                 String.valueOf(report.getTotalExpectedParticipants()),
                                 0);
-                addKeyValueLine(document, "Total Registered Participants",
+                ReportGeneratorUtils.addKeyValueLine(document, "Total Registered Participants",
                                 String.valueOf(report.getTotalRegisteredParticipants()), 0);
 
                 // FIX for the Attendance Report: Use correct String.format
-                addKeyValueLine(document, "Registration Fill Rate",
+                ReportGeneratorUtils.addKeyValueLine(document, "Registration Fill Rate",
                                 String.format("%.2f%%", report.getRegistrationFillRate()), 0);
 
                 document.add(Chunk.NEWLINE);
@@ -241,16 +235,17 @@ public class EventReportServiceImpl implements EventReportService {
                         document.add(sessionName);
 
                         // Session Details
-                        addKeyValueLine(document, "Start Date and Time",
+                        ReportGeneratorUtils.addKeyValueLine(document, "Start Date and Time",
                                         DateHelper.formatHumanReadableDateTime(session.getSessionStartDate()), 20f);
-                        addKeyValueLine(document, "End Date and Time",
+                        ReportGeneratorUtils.addKeyValueLine(document, "End Date and Time",
                                         DateHelper.formatHumanReadableDateTime(session.getSessionEndDate()),
                                         20f);
-                        addKeyValueLine(document, "Total Attendees", String.valueOf(session.getTotalAttendees()), 20f);
+                        ReportGeneratorUtils.addKeyValueLine(document, "Total Attendees",
+                                        String.valueOf(session.getTotalAttendees()), 20f);
 
                         // This line also likely needs String.format if sessionAttendanceRate is a
                         // double
-                        addKeyValueLine(document, "Session Attendance Rate",
+                        ReportGeneratorUtils.addKeyValueLine(document, "Session Attendance Rate",
                                         String.format("%.2f%%", session.getSessionAttendanceRate()),
                                         20f);
 
@@ -270,13 +265,13 @@ public class EventReportServiceImpl implements EventReportService {
                 if (report.getDemographicData() != null) {
                         try {
 
-                                Image facultyChart = PieChartGenerator.generatePieChartImage("Faculty Distribution",
+                                Image facultyChart = ReportGeneratorUtils.generatePieChartImage("Faculty Distribution",
                                                 report.getDemographicData().get("Faculty"));
-                                Image courseChart = PieChartGenerator.generatePieChartImage("Course Distribution",
+                                Image courseChart = ReportGeneratorUtils.generatePieChartImage("Course Distribution",
                                                 report.getDemographicData().get("Course"));
-                                Image yearChart = PieChartGenerator.generatePieChartImage("Year Distribution",
+                                Image yearChart = ReportGeneratorUtils.generatePieChartImage("Year Distribution",
                                                 report.getDemographicData().get("Year"));
-                                Image genderChart = PieChartGenerator.generatePieChartImage("Gender Distribution",
+                                Image genderChart = ReportGeneratorUtils.generatePieChartImage("Gender Distribution",
                                                 report.getDemographicData().get("Gender"));
                                 // Faculty Chart
                                 document.add(facultyChart);
@@ -413,10 +408,12 @@ public class EventReportServiceImpl implements EventReportService {
                 // overview content
                 // addKeyValueLine(document, "Event Description", report.getEventDescription(),
                 // 0);
-                addKeyValueLine(document, "Event Duration", DateHelper.formatDate(report.getEventStartDateTime())
-                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()), 0);
-                addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
-                addKeyValueLine(document, "Activity Scale",
+                ReportGeneratorUtils.addKeyValueLine(document, "Event Duration",
+                                DateHelper.formatDate(report.getEventStartDateTime())
+                                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()),
+                                0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Activity Scale",
                                 String.valueOf(report.getTotalParticipants()) + " Participants", 0);
 
                 document.add(Chunk.NEWLINE);
@@ -428,9 +425,9 @@ public class EventReportServiceImpl implements EventReportService {
                 overallSummaryHeader.setSpacingAfter(HEADER_SPACING);
                 document.add(overallSummaryHeader);
 
-                addKeyValueLine(document, "Total Budget Allocated",
+                ReportGeneratorUtils.addKeyValueLine(document, "Total Budget Allocated",
                                 "RM " + String.format("%.2f", report.getTotalBudgetAllocated()), 0);
-                addKeyValueLine(document, "Total Budget Spent",
+                ReportGeneratorUtils.addKeyValueLine(document, "Total Budget Spent",
                                 "RM " + String.format("%.2f", report.getTotalBudgetSpent()), 0);
 
                 double overallVariance = report.getTotalBudgetAllocated() - report.getTotalBudgetSpent();
@@ -443,7 +440,9 @@ public class EventReportServiceImpl implements EventReportService {
                 } else {
                         overallVarianceString = String.format("The event is under budget by RM%.2f", overallVariance);
                 }
-                addKeyValueLine(document, "Variance (Overall)", overallVarianceString, 0); // Corrected this line
+                ReportGeneratorUtils.addKeyValueLine(document, "Variance (Overall)", overallVarianceString, 0); // Corrected
+                                                                                                                // this
+                                                                                                                // line
 
                 document.add(Chunk.NEWLINE);
                 document.add(new LineSeparator());
@@ -491,7 +490,7 @@ public class EventReportServiceImpl implements EventReportService {
 
                 for (EventBudgetDTO budget : allBudgetCategoriesSortedBySpent) {
                         // Format: Category Name - RM Actual_Spent_Amount
-                        addKeyValueLine(document, budget.getBudgetCategoryName(),
+                        ReportGeneratorUtils.addKeyValueLine(document, budget.getBudgetCategoryName(),
                                         "RM " + String.format("%.2f", budget.getAmountSpent()), 20f); // Indent this
                                                                                                       // list
                 }
@@ -512,9 +511,9 @@ public class EventReportServiceImpl implements EventReportService {
                         budgetCategoryName.setSpacingAfter(5f);
                         document.add(budgetCategoryName);
 
-                        addKeyValueLine(document, "Allocated Amount",
+                        ReportGeneratorUtils.addKeyValueLine(document, "Allocated Amount",
                                         "RM " + String.format("%.2f", budget.getAmountAllocated()), 20f);
-                        addKeyValueLine(document, "Actual Spent Amount",
+                        ReportGeneratorUtils.addKeyValueLine(document, "Actual Spent Amount",
                                         "RM " + String.format("%.2f", budget.getAmountSpent()), 20f);
 
                         double categoryVariance = budget.getAmountAllocated() - budget.getAmountSpent();
@@ -527,14 +526,15 @@ public class EventReportServiceImpl implements EventReportService {
                         } else {
                                 categoryVarianceString = String.format("Under budget by RM%.2f", categoryVariance);
                         }
-                        addKeyValueLine(document, "Variance", categoryVarianceString, 20f);
+                        ReportGeneratorUtils.addKeyValueLine(document, "Variance", categoryVarianceString, 20f);
 
                         // Handle potential division by zero for percentage of used
                         double percentageUsed = 0.0;
                         if (budget.getAmountAllocated() > 0) {
                                 percentageUsed = (budget.getAmountSpent() / budget.getAmountAllocated()) * 100;
                         }
-                        addKeyValueLine(document, "Percentage of used", String.format("%.2f%%", percentageUsed), 20f);
+                        ReportGeneratorUtils.addKeyValueLine(document, "Percentage of used",
+                                        String.format("%.2f%%", percentageUsed), 20f);
 
                 }
                 document.close();
@@ -585,14 +585,16 @@ public class EventReportServiceImpl implements EventReportService {
                 document.add(actualDescription);
 
                 // Helper method to add key-value lines
-                addKeyValueLine(document, "Event Duration", DateHelper.formatDate(report.getEventStartDateTime())
-                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()), 0);
-                addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
-                addKeyValueLine(document, "Activity Scale",
+                ReportGeneratorUtils.addKeyValueLine(document, "Event Duration",
+                                DateHelper.formatDate(report.getEventStartDateTime())
+                                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()),
+                                0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
+                ReportGeneratorUtils.addKeyValueLine(document, "Activity Scale",
                                 String.valueOf(report.getTotolParticipants()) + " Participants", 0);
-                addKeyValueLine(document, "Number of Feedback Entries",
+                ReportGeneratorUtils.addKeyValueLine(document, "Number of Feedback Entries",
                                 String.valueOf(report.getTotalFeedbackEntries()), 0);
-                addKeyValueLine(document, "Feedback Submission Rate",
+                ReportGeneratorUtils.addKeyValueLine(document, "Feedback Submission Rate",
                                 String.format("%.2f%%", report.getFeedbackSubmissionRate()), 0);
 
                 document.add(Chunk.NEWLINE);
@@ -604,12 +606,12 @@ public class EventReportServiceImpl implements EventReportService {
                 overallSummaryHeader.setSpacingAfter(HEADER_SPACING);
                 document.add(overallSummaryHeader);
 
-                addKeyValueLine(document, "Average Rating",
+                ReportGeneratorUtils.addKeyValueLine(document, "Average Rating",
                                 String.format("%.1f", report.getAverageRating()) + " / 5.0", 0);
                 document.add(Chunk.NEWLINE);
 
                 // Generate and add the chart to the cell
-                Image ratingDistributionChart = PieChartGenerator.generatePieChartImage("Ratings Distribution",
+                Image ratingDistributionChart = ReportGeneratorUtils.generatePieChartImage("Ratings Distribution",
                                 report.getRatingsDistribution());
 
                 if (ratingDistributionChart != null) {
@@ -675,23 +677,6 @@ public class EventReportServiceImpl implements EventReportService {
 
                 document.close();
                 return byteArrayOutputStream.toByteArray();
-        }
-
-        // Add Information Key-value pair in pdf
-        private void addKeyValueLine(Document document, String key, String value, float leftIndentation)
-                        throws DocumentException {
-                float tabPosition = 200f;
-                TabStop tabStop = new TabStop(tabPosition, TabStop.Alignment.LEFT);
-                TabSettings tabSettings = new TabSettings(Arrays.asList(tabStop), 50f);
-
-                Paragraph paragraph = new Paragraph();
-                paragraph.setIndentationLeft(leftIndentation);
-                paragraph.setTabSettings(tabSettings); // Apply the tab settings
-                paragraph.add(new Chunk(key, NORMAL_FONT)); // Add the key
-                paragraph.add(Chunk.TABBING); // Insert a tab to move to the defined tab stop
-                paragraph.add(new Chunk(" : " + value, NORMAL_FONT)); // Add the value
-                paragraph.setSpacingAfter(5f); // Add some spacing after the line
-                document.add(paragraph);
         }
 
         public EventAttendanceReportDTO getAttendanceReportData(Integer eventId) {
@@ -812,8 +797,7 @@ public class EventReportServiceImpl implements EventReportService {
                 return sessionAttendance;
         }
 
-        @Override // Assuming this method overrides an interface method, otherwise remove this
-                  // annotation
+        @Override
         public EventReportOverviewDTO getEventReportOverviewDTO(Integer eventId) {
                 Event event = eventRepo.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
 
@@ -846,7 +830,7 @@ public class EventReportServiceImpl implements EventReportService {
                                 .build();
 
                 // --- Handle Budget Report Overview ---
-                
+
                 Map<String, Long> budgetExpenses = eventBudgetService.findTotalBudgetAndExpenseByEventId(eventId);
                 BudgetReportOverview budgetReportOverview = BudgetReportOverview.builder()
                                 .budgetReport(budgetReport)
@@ -886,22 +870,8 @@ public class EventReportServiceImpl implements EventReportService {
                  * private Map<Integer, Long> ratings;
                  */
 
-               
                 return eventReportOverviewDTO;
         }
-
-        /**
-         * Generates a comprehensive feedback report for a specific event.
-         *
-         * @param eventId       The ID of the event for which to generate the report.
-         * @param commentsLimit An optional parameter to limit the number of comments
-         *                      fetched for each rating.
-         *                      If null or <= 0, all comments for each rating will be
-         *                      included.
-         * @return An EventFeedbackReportDTO containing all relevant feedback statistics
-         *         and details.
-         * @throws RuntimeException if the event is not found.
-         */
 
         private EventFeedbackReportDTO getFeedbackReportData(Integer eventId, Integer commentsLimit) {
                 EventFeedbackReportDTO report = new EventFeedbackReportDTO();
@@ -1024,4 +994,5 @@ public class EventReportServiceImpl implements EventReportService {
                 }
                 return ratingsDistribution;
         }
+
 }

@@ -2,6 +2,8 @@ package com.utem.event_hub_navigation.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,12 +34,14 @@ public class EventReport {
 
   
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "event_id",nullable = false)
     private Event event;
 
     @Enumerated(EnumType.STRING)
 	@Column(nullable = false)
     private ReportType type;
+    
     
     private String fileUrl;
     private LocalDateTime generatedAt;

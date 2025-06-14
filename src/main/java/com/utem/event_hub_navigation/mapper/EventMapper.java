@@ -12,6 +12,7 @@ import com.utem.event_hub_navigation.model.Event;
 public interface EventMapper {
 
     @Mapping(source = "organizer.id", target = "organizerId")
+    @Mapping(source = "organizer.name", target = "organizerName")
     EventDTO toDto(Event event);
 
     @Mapping(source = "organizerId", target = "organizer", qualifiedByName = "mapUser")

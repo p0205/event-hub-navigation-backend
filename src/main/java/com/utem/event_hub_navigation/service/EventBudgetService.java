@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.utem.event_hub_navigation.dto.AddEventExpenseDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
@@ -17,5 +18,7 @@ public interface EventBudgetService {
 
     // Get all budgets by event id
     List<EventBudgetDTO> getAllBudgetsByEventId(Integer eventId);
+
+    Map<String, Long> findTotalBudgetAndExpenseByEventId(Integer eventId);
 
 }

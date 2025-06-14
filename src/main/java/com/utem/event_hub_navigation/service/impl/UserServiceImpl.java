@@ -125,4 +125,43 @@ public class UserServiceImpl implements UserService {
         return user.get();
     }
 
+    @Override
+    public UserDTO updatePhoneNumber(Integer userId, String phoneNo) {
+  
+            Optional<User> userOpt = userRepo.findById(userId);
+            if (userOpt.isEmpty()) {
+                return null;
+            }
+
+            User user = userOpt.get();
+            user.setPhoneNo(phoneNo);
+            userRepo.save(user);
+            return userMapper.toUserDTO(user);
+    
+    }
+
+    @Override
+    public boolean updatePassword(Integer userId, String currentPassword, String newPassword) {
+        try {
+            Optional<User> userOpt = userRepo.findById(userId);
+            if (userOpt.isEmpty()) {
+                return false;
+            }
+
+            User user = userOpt.get();
+            
+            // Verify current password
+            if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+                return false;
+            }
+
+            // Update to new password
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            userRepo.save(user);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }

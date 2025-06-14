@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,7 @@ import com.utem.event_hub_navigation.repo.EventBudgetRepo;
 import com.utem.event_hub_navigation.service.BudgetCategoryService;
 import com.utem.event_hub_navigation.service.EventBudgetService;
 import com.utem.event_hub_navigation.service.EventService;
+import com.utem.event_hub_navigation.utils.DataConversionUtil;
 
 @Service
 public class EventBudgetServiceImpl implements EventBudgetService {
@@ -115,5 +117,11 @@ public class EventBudgetServiceImpl implements EventBudgetService {
 
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Long> findTotalBudgetAndExpenseByEventId(Integer eventId) {
+        List<Object[]> data = eventBudgetRepo.findTotalBudgetAndExpenseByEventId(eventId);
+        return DataConversionUtil.convertBudgetObjectListToMap(data);
     }
 }

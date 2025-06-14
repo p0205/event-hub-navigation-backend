@@ -14,30 +14,28 @@ import org.springframework.web.bind.annotation.RestController;
 import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.impl.EventReportServiceImpl;
 
-@RequestMapping("/api/{eventId}/report")
+@RequestMapping("/api/events/{eventId}/report")
 @RestController
 public class EventReportController {
 
     @Autowired
     private EventReportServiceImpl eventReportService;
 
-    
-    @GetMapping
+    @GetMapping("/attendance")
     public ResponseEntity<?> getEventAttendanceReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
             byte[] pdfBytes = eventReportService.generateEventAttendanceReport(eventId);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "Event_Report_" + eventId + ".pdf");
             headers.setContentLength(pdfBytes.length);
-            
+
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
-
     }
 
     @GetMapping("/budget")
@@ -45,8 +43,52 @@ public class EventReportController {
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
             eventReportService.storeReport(eventId, ReportType.BUDGET);
-          
+
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+
+    }
+
+    @GetMapping("/feedback")
+
+    public ResponseEntity<byte[]> generateFeedbackReport(
+            @PathVariable Integer eventId,
+            @RequestParam(name = "commentsLimit", required = false) Integer commentsLimit) {
+        try {
+          
+      
+            byte[] pdfBytes = eventReportService.saveEventFeedbackReport(eventId, commentsLimit);
+
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Event_Report_" + eventId + ".pdf");
+            headers.setContentLength(pdfBytes.length);
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (RuntimeException e) {
+            // Catch runtime exceptions (e.g., "Event not found")
+            System.err.println("Error processing feedback report for event ID " + eventId + ": " + e.getMessage());
+            return new ResponseEntity<>(("Error: " + e.getMessage()).getBytes(), HttpStatus.NOT_FOUND); // Use NOT_FOUND
+                                                                                                        // for event not
+                                                                                                        // found
+        } catch (Exception e) {
+            // Catch any other unexpected exceptions
+            System.err.println("An unexpected error occurred: " + e.getMessage());
+            return new ResponseEntity<>(("An unexpected error occurred: " + e.getMessage()).getBytes(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/overview")
+    public ResponseEntity<?> getReportOverview(@PathVariable Integer eventId) {
+
+        try {
+
+            return ResponseEntity.ok(eventReportService.getEventReportOverviewDTO(eventId));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }

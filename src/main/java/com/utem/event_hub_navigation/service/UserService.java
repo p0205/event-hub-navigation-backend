@@ -22,4 +22,8 @@ public interface UserService {
 
     User getUserById(Integer userId);
 
+    UserDTO updatePhoneNumber(Integer userId, String phoneNo);
+    
+    boolean updatePassword(Integer userId, String currentPassword, String newPassword);
+
 }

@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,6 +32,7 @@ public class Node {
     private Double y_coord;
     
     @ManyToOne(fetch = FetchType.LAZY)
+     @JsonIgnore
     @JoinColumn(name = "floor_plan_id",nullable = false)
     private FloorPlan floor;
 

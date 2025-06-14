@@ -25,6 +25,7 @@ public class EventDTO {
     private String description;
 
     private Integer organizerId;
+    private String organizerName;
 
 
     @Enumerated(EnumType.STRING)

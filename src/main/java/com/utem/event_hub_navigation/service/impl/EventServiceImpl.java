@@ -306,7 +306,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDTO getEventDTOById(Integer id) {
         Optional<Event> optionalEvent = eventRepo.findById(id);
-
+        
         return eventMapper.toDto(optionalEvent.get());
 
     }

@@ -2,9 +2,12 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,13 +25,22 @@ import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.TabSettings;
 import com.itextpdf.text.TabStop;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
+import com.utem.event_hub_navigation.dto.AttendanceReportOverview;
+import com.utem.event_hub_navigation.dto.BudgetReportOverview;
 import com.utem.event_hub_navigation.dto.EventAttendanceReportDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetReportDTO;
+import com.utem.event_hub_navigation.dto.EventFeedbackReportDTO;
+import com.utem.event_hub_navigation.dto.EventReportOverviewDTO;
+import com.utem.event_hub_navigation.dto.FeedbackReportOveriew;
 import com.utem.event_hub_navigation.dto.SessionAttendanceDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventReport;
@@ -37,6 +49,7 @@ import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.repo.AttendanceRepo;
 import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.EventReportRepo;
+import com.utem.event_hub_navigation.repo.FeedbackRepo;
 import com.utem.event_hub_navigation.repo.RegistrationRepo;
 import com.utem.event_hub_navigation.repo.SessionRepo;
 import com.utem.event_hub_navigation.service.EventBudgetService;
@@ -59,6 +72,13 @@ public class EventReportServiceImpl implements EventReportService {
         private static final Font SMALL_FONT = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, BaseColor.GRAY);
         private static final Font DESCRIPTION_FONT = new Font(Font.FontFamily.HELVETICA, 12, Font.ITALIC,
                         BaseColor.GRAY);
+        private static final Font COMMENT_FONT = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL,
+                        BaseColor.DARK_GRAY);
+        // ADD THIS NEW FONT
+        // private static Font UNICODE_STAR_FONT= new Font(Font.FontFamily.COURIER, 10,
+        // Font.NORMAL,
+        // BaseColor.DARK_GRAY);
+
         private static final float HEADER_SPACING = 20f;
 
         private EventRepo eventRepo;
@@ -73,12 +93,15 @@ public class EventReportServiceImpl implements EventReportService {
 
         private EventReportRepo eventReportRepo;
 
+        private FeedbackRepo feedbackRepo;
+
         private EventBudgetService eventBudgetService;
 
         @Autowired
         public EventReportServiceImpl(EventRepo eventRepository, RegistrationRepo registrationRepository,
                         AttendanceRepo attendanceRepository, SessionRepo sessionRepository,
                         SupabaseStorageService supabaseStorageService, EventReportRepo eventReportRepo,
+                        FeedbackRepo feedbackRepo,
                         EventBudgetService eventBudgetService) {
                 this.eventRepo = eventRepository;
                 this.registrationRepo = registrationRepository;
@@ -86,6 +109,7 @@ public class EventReportServiceImpl implements EventReportService {
                 this.attendanceRepo = attendanceRepository;
                 this.supabaseStorageService = supabaseStorageService;
                 this.eventReportRepo = eventReportRepo;
+                this.feedbackRepo = feedbackRepo;
                 this.eventBudgetService = eventBudgetService;
         }
 
@@ -208,7 +232,7 @@ public class EventReportServiceImpl implements EventReportService {
                 sessionHeader.setSpacingAfter(HEADER_SPACING);
                 document.add(sessionHeader);
 
-                System.out.println(report.getSessionAttendances().toString());
+                // System.out.println(report.getSessionAttendances().toString());
                 // Session Info
                 for (SessionAttendanceDTO session : report.getSessionAttendances()) {
                         // Session Name
@@ -289,6 +313,49 @@ public class EventReportServiceImpl implements EventReportService {
                 // Now, generate the report in PDF
                 try {
                         return generateBudgetReportPDF(report, "EventBudgetReport_" + eventId + ".pdf");
+                } catch (DocumentException e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Error generating PDF report " + e.toString());
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Error generating PDF report " + e.toString());
+                }
+
+        }
+
+        public byte[] saveEventFeedbackReport(Integer eventId, Integer commentsLimit) {
+                // You are currently calling getAttendanceReportData here.
+                // It should be getBudgetReportData for a budget report.
+                EventFeedbackReportDTO reportData = getFeedbackReportData(eventId, commentsLimit);
+
+                // Now, generate the report in PDF
+                try {
+                        String filename = UUID.randomUUID() + "EventFeedbackReport_" + eventId + ".pdf";
+
+                        return generateFeedbackReportPDF(reportData,
+                                        "EventFeedbackReport_" + eventId + ".pdf",
+                                        commentsLimit);
+
+                        // Generate a unique, sanitized filename
+
+                        // Upload the file to Supabase
+                        // String fileUrl = supabaseStorageService.uploadFile(reportBytes,
+                        // "event-report", filename);
+
+                        // // Fetch the event and ensure it exists
+                        // Event event = eventRepo.findById(eventId)
+                        // .orElseThrow(() -> new RuntimeException(
+                        // "Event with ID " + eventId + " not found."));
+
+                        // // Build and save the report
+                        // EventReport report = EventReport.builder()
+                        // .event(event)
+                        // .type(ReportType.FEEDBACK)
+                        // .fileUrl(fileUrl)
+                        // .generatedAt(LocalDateTime.now())
+                        // .build();
+
+                        // eventReportRepo.save(report);
                 } catch (DocumentException e) {
                         e.printStackTrace();
                         throw new RuntimeException("Error generating PDF report " + e.toString());
@@ -475,30 +542,140 @@ public class EventReportServiceImpl implements EventReportService {
                 return byteArrayOutputStream.toByteArray();
         }
 
-        // private Image generatePieChartImage(String title, DemographicDataDTO
-        // demographicDataDTO) throws Exception {
-        // DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
-        // for (DemographicDataRow row : demographicDataDTO.getData()) {
-        // dataset.setValue(row.getValue(), row.getCount());
-        // }
+        public byte[] generateFeedbackReportPDF(EventFeedbackReportDTO report, String filename, Integer commentsLimit)
+                        throws DocumentException, IOException {
+                Document document = new Document(PageSize.A4, 50, 50, 50, 50);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                PdfWriter.getInstance(document, byteArrayOutputStream);
 
-        // // 2. Create the chart
-        // JFreeChart chart = ChartFactory.createPieChart(title, dataset, true, true,
-        // false);
+                document.open();
 
-        // // 3. Convert the chart to a PNG image
-        // ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
-        // EncoderUtil.writeBufferedImage(chart.createBufferedImage(500, 300),
-        // ImageFormat.PNG, chartOutputStream);
+                // Report generation date header
+                Paragraph generatedDateTime = new Paragraph(
+                                "Report Generated On: " + DateHelper
+                                                .formatHumanReadableDateTime(report.getReportGenerationDate()),
+                                SMALL_FONT);
+                generatedDateTime.setAlignment(Element.ALIGN_RIGHT);
+                document.add(generatedDateTime);
 
-        // // 4. Convert to iText Image
-        // Image chartImage = Image.getInstance(chartOutputStream.toByteArray());
-        // chartImage.setAlignment(Element.ALIGN_CENTER);
-        // chartImage.setSpacingBefore(10f);
-        // chartImage.setSpacingAfter(10f);
+                // Event Name
+                Paragraph eventName = new Paragraph(report.getEventName(), TITLE_FONT);
+                eventName.setAlignment(Element.ALIGN_CENTER);
+                document.add(eventName);
 
-        // return chartImage;
-        // }
+                // Event Type
+                Paragraph title = new Paragraph("Event Feedback Report", TITLE_FONT);
+                title.setAlignment(Element.ALIGN_CENTER);
+                title.setSpacingAfter(15f);
+                document.add(title);
+
+                // --- Overview section ---
+                // Header
+                Paragraph overviewHeader = new Paragraph("Event Overview", HEADER_FONT);
+                overviewHeader.setSpacingAfter(HEADER_SPACING);
+                document.add(overviewHeader);
+
+                // Inside Event Overview section
+                Paragraph descriptionParagraph = new Paragraph("Event Description:", NORMAL_FONT);
+                descriptionParagraph.setSpacingAfter(5f);
+                document.add(descriptionParagraph);
+                Paragraph actualDescription = new Paragraph(report.getEventDescription(), DESCRIPTION_FONT);
+                actualDescription.setIndentationLeft(20f); // Indent it slightly
+                actualDescription.setSpacingAfter(10f);
+                document.add(actualDescription);
+
+                // Helper method to add key-value lines
+                addKeyValueLine(document, "Event Duration", DateHelper.formatDate(report.getEventStartDateTime())
+                                + " - " + DateHelper.formatDate(report.getEventEndDateTime()), 0);
+                addKeyValueLine(document, "Organizer", report.getOrganizerName(), 0);
+                addKeyValueLine(document, "Activity Scale",
+                                String.valueOf(report.getTotolParticipants()) + " Participants", 0);
+                addKeyValueLine(document, "Number of Feedback Entries",
+                                String.valueOf(report.getTotalFeedbackEntries()), 0);
+                addKeyValueLine(document, "Feedback Submission Rate",
+                                String.format("%.2f%%", report.getFeedbackSubmissionRate()), 0);
+
+                document.add(Chunk.NEWLINE);
+                document.add(new LineSeparator());
+
+                // --- Overall Rating Summary section ---
+                Paragraph overallSummaryHeader = new Paragraph("Overall Rating Summary", HEADER_FONT);
+                overallSummaryHeader.setSpacingBefore(HEADER_SPACING);
+                overallSummaryHeader.setSpacingAfter(HEADER_SPACING);
+                document.add(overallSummaryHeader);
+
+                addKeyValueLine(document, "Average Rating",
+                                String.format("%.1f", report.getAverageRating()) + " / 5.0", 0);
+                document.add(Chunk.NEWLINE);
+
+                // Generate and add the chart to the cell
+                Image ratingDistributionChart = PieChartGenerator.generatePieChartImage("Ratings Distribution",
+                                report.getRatingsDistribution());
+
+                if (ratingDistributionChart != null) {
+                        ratingDistributionChart.setAlignment(Element.ALIGN_CENTER);
+
+                } else {
+                        Paragraph errorMsg = new Paragraph("Could not generate ratings distribution chart.",
+                                        SMALL_FONT);
+                        errorMsg.setAlignment(Element.ALIGN_CENTER);
+
+                }
+
+                // Add the cell to the table and the table to the document
+
+                document.add(ratingDistributionChart);
+
+                document.add(Chunk.NEWLINE);
+                document.add(new LineSeparator());
+
+                Paragraph commentsHeader = new Paragraph("Feedback Comments", HEADER_FONT);
+                commentsHeader.setSpacingBefore(HEADER_SPACING);
+                commentsHeader.setSpacingAfter(10f);
+                document.add(commentsHeader);
+
+                // Check if there are any comments to display
+                if (report.getCommentsForEachRating() != null && !report.getCommentsForEachRating().isEmpty()) {
+                        // Iterate through ratings from 5 down to 1 to ensure consistent order in PDF
+                        for (int rating = 5; rating >= 1; rating--) {
+                                List<String> commentsList = report.getCommentsForEachRating().get(rating);
+
+                                String ratingText = "Rating: " + rating + " stars";
+                                Paragraph ratingTitle = new Paragraph(ratingText, SUBHEADER_FONT);
+                                ratingTitle.setSpacingBefore(15f);
+                                ratingTitle.setSpacingAfter(5f);
+                                document.add(ratingTitle);
+
+                                // Add comments or "No comments received" message
+                                if (commentsList != null && !commentsList.isEmpty()) {
+                                        // Iterate over each individual comment and add as a separate paragraph with
+                                        // bullet
+                                        for (String comment : commentsList) {
+                                                Paragraph commentParagraph = new Paragraph("- \"" + comment + "\"",
+                                                                COMMENT_FONT);
+                                                commentParagraph.setIndentationLeft(20f);
+                                                commentParagraph.setSpacingAfter(3f);
+                                                document.add(commentParagraph);
+                                        }
+                                } else {
+                                        // No comments for this rating
+                                        Paragraph noCommentsParagraph = new Paragraph("No comments received.",
+                                                        COMMENT_FONT);
+                                        noCommentsParagraph.setIndentationLeft(20f);
+                                        noCommentsParagraph.setSpacingAfter(3f);
+                                        document.add(noCommentsParagraph);
+                                }
+                        }
+                } else {
+                        Paragraph noComments = new Paragraph("No feedback comments available for this event.",
+                                        NORMAL_FONT);
+                        noComments.setAlignment(Element.ALIGN_CENTER);
+                        document.add(noComments);
+                }
+
+                document.close();
+                return byteArrayOutputStream.toByteArray();
+        }
 
         // Add Information Key-value pair in pdf
         private void addKeyValueLine(Document document, String key, String value, float leftIndentation)
@@ -516,14 +693,6 @@ public class EventReportServiceImpl implements EventReportService {
                 paragraph.setSpacingAfter(5f); // Add some spacing after the line
                 document.add(paragraph);
         }
-
-        // private void addTableHeader(PdfPTable table, String headerTitle) {
-        // PdfPCell header = new PdfPCell();
-        // header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        // header.setBorderWidth(2);
-        // header.setPhrase(new Phrase(headerTitle, SUBHEADER_FONT));
-        // table.addCell(header);
-        // }
 
         public EventAttendanceReportDTO getAttendanceReportData(Integer eventId) {
                 EventAttendanceReportDTO report = new EventAttendanceReportDTO();
@@ -620,5 +789,239 @@ public class EventReportServiceImpl implements EventReportService {
                 return data
                                 .stream()
                                 .collect(Collectors.toMap(row -> (String) row[0], row -> (Long) row[1]));
+        }
+
+        public List<SessionAttendanceDTO> getSessionAttendance(Event event) {
+                List<SessionAttendanceDTO> sessionAttendance = new ArrayList<>();
+
+                // Fetch registrations for event
+                int totalRegisteredParticipants = registrationRepo.countByEventId(event.getId());
+                // Calculate Session-Specific Attendance Rates
+                List<Session> sessions = sessionRepo.findByEvent(event);
+                for (Session session : sessions) {
+                        int totalAttendeesForSession = attendanceRepo.countBySessionId(session.getId());
+                        double sessionAttendanceRate = (double) totalAttendeesForSession / totalRegisteredParticipants
+                                        * 100;
+                        sessionAttendance.add(SessionAttendanceDTO.builder()
+                                        .sessionName(session.getSessionName())
+                                        .totalAttendees(totalAttendeesForSession)
+                                        .sessionAttendanceRate(sessionAttendanceRate)
+                                        .build());
+
+                }
+                return sessionAttendance;
+        }
+
+        @Override // Assuming this method overrides an interface method, otherwise remove this
+                  // annotation
+        public EventReportOverviewDTO getEventReportOverviewDTO(Integer eventId) {
+                Event event = eventRepo.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
+
+                // Fetch all event reports for the given eventId
+                List<EventReport> eventReports = getEventReport(eventId);
+
+                // Initialize report variables to null
+                EventReport budgetReport = null;
+                EventReport attendanceReport = null;
+
+                // Iterate through the fetched reports and assign them based on their type
+                for (EventReport report : eventReports) {
+                        // Safely convert the report type string to enum for comparison
+                        // Make sure your ReportType enum has constant values like BUDGET and ATTENDANCE
+                        if (ReportType.BUDGET.equals(report.getType())) {
+                                budgetReport = report;
+                        } else if (ReportType.ATTENDANCE.equals(report.getType())) {
+                                attendanceReport = report;
+                        }
+                        // Add more conditions here if you have other report types
+                }
+
+                // --- Handle Attendance Report Overview ---
+                List<SessionAttendanceDTO> attendanceDTOs = getSessionAttendance(event); // Assuming this class or an
+                                                                                         // injected service handles
+                                                                                         // this
+                AttendanceReportOverview attendanceReportOverview = AttendanceReportOverview.builder()
+                                .attendanceReport(attendanceReport) // Insert attendance report here
+                                .sessionAttendances(attendanceDTOs)
+                                .build();
+
+                // --- Handle Budget Report Overview ---
+                
+                Map<String, Long> budgetExpenses = eventBudgetService.findTotalBudgetAndExpenseByEventId(eventId);
+                BudgetReportOverview budgetReportOverview = BudgetReportOverview.builder()
+                                .budgetReport(budgetReport)
+                                .totalBudget(budgetExpenses.get("totalBudget"))
+                                .totalExpenses(budgetExpenses.get("totalExpenses"))
+                                // Calculate remaining budget, ensuring non-null values
+                                .remaining(
+                                                (budgetExpenses.get("totalBudget") != null
+                                                                ? budgetExpenses.get("totalBudget")
+                                                                : 0L) -
+                                                                (budgetExpenses.get("totalExpenses") != null
+                                                                                ? budgetExpenses.get("totalExpenses")
+                                                                                : 0L))
+                                .build();
+
+                Map<String, Object> feedbackSummary = getFeedbackNoAndAverageRatings(eventId);
+
+                Map<String, Long> ratingsDistribution = getRatingsDistribution(eventId);
+                FeedbackReportOveriew feedbackReportOveriew = FeedbackReportOveriew.builder()
+                                .averageRating((Double) feedbackSummary.get("averageRating"))
+                                .feedbackCount((int) feedbackSummary.get("feedbackEntries"))
+                                .ratings(ratingsDistribution)
+                                .build();
+                // --- Build Final Event Report Overview DTO ---
+                EventReportOverviewDTO eventReportOverviewDTO = EventReportOverviewDTO.builder()
+                                .attendance(attendanceReportOverview)
+                                .budget(budgetReportOverview)
+                                .feedback(feedbackReportOveriew)
+                                .eventName(event.getName())
+                                .build();
+
+                /*
+                 * 
+                 * 
+                 * private double averageRating;
+                 * private int feedbackCount;
+                 * private Map<Integer, Long> ratings;
+                 */
+
+               
+                return eventReportOverviewDTO;
+        }
+
+        /**
+         * Generates a comprehensive feedback report for a specific event.
+         *
+         * @param eventId       The ID of the event for which to generate the report.
+         * @param commentsLimit An optional parameter to limit the number of comments
+         *                      fetched for each rating.
+         *                      If null or <= 0, all comments for each rating will be
+         *                      included.
+         * @return An EventFeedbackReportDTO containing all relevant feedback statistics
+         *         and details.
+         * @throws RuntimeException if the event is not found.
+         */
+
+        private EventFeedbackReportDTO getFeedbackReportData(Integer eventId, Integer commentsLimit) {
+                EventFeedbackReportDTO report = new EventFeedbackReportDTO();
+
+                // --- Common Event Details ---
+                Event event = eventRepo.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
+                report.setEventName(event.getName());
+                // Assuming organizer is directly accessible, adjust if it's a separate entity
+                report.setOrganizerName(event.getOrganizer() != null ? event.getOrganizer().getName() : "N/A");
+                report.setEventStartDateTime(event.getStartDateTime());
+                report.setEventEndDateTime(event.getEndDateTime());
+                report.setReportGenerationDate(LocalDateTime.now());
+                report.setEventDescription(event.getDescription());
+
+                // --- Total Participants ---
+                int totalRegisteredParticipants = registrationRepo.countByEventId(eventId);
+                report.setTotolParticipants(totalRegisteredParticipants); // Corrected typo to 'totalParticipants' if
+                                                                          // DTO allows
+
+                // --- Total Feedback Entries & Average Rating ---
+                List<Object[]> feedbackSummary = feedbackRepo.findTotalEntriesAndAverageRatingByEventId(eventId);
+                int totalFeedbackEntries = 0;
+                double averageRating = 0.0;
+
+                if (feedbackSummary != null && !feedbackSummary.isEmpty()) {
+                        Object[] data = feedbackSummary.get(0);
+                        if (data[0] instanceof Long) {
+                                totalFeedbackEntries = ((Long) data[0]).intValue();
+                        }
+                        if (data[1] instanceof Double) {
+                                averageRating = (Double) data[1];
+                        }
+                }
+                report.setTotalFeedbackEntries(totalFeedbackEntries);
+                report.setAverageRating(averageRating);
+
+                // --- Feedback Submission Rate ---
+                if (totalRegisteredParticipants > 0) {
+                        report.setFeedbackSubmissionRate(
+                                        ((double) totalFeedbackEntries / totalRegisteredParticipants) * 100);
+                } else {
+                        report.setFeedbackSubmissionRate(0.0); // No participants, no submission rate
+                }
+
+                // --- Ratings Distribution ---
+                Map<String, Long> ratingsDistribution = getRatingsDistribution(eventId);
+                report.setRatingsDistribution(ratingsDistribution);
+
+                // --- Comments for Each Rating ---
+                List<Object[]> commentsData = feedbackRepo.findCommentsByEventId(eventId);
+                Map<Integer, List<String>> commentsByRating = new LinkedHashMap<>(); // Use LinkedHashMap to keep rating
+                                                                                     // order
+
+                // Initialize the map with keys 1-5 first
+                for (int i = 1; i <= 5; i++) {
+                        commentsByRating.put(i, new ArrayList<>());
+                }
+
+                // Now populate with actual comments
+                if (commentsData != null) {
+                        Map<Integer, Integer> commentCounts = new HashMap<>(); // To track count per rating
+                        boolean applyLimit = commentsLimit != null && commentsLimit > 0;
+
+                        for (Object[] row : commentsData) {
+                                if (row[0] instanceof Integer && row[1] instanceof String) {
+                                        Integer rating = (Integer) row[0];
+                                        String comment = (String) row[1];
+
+                                        if (rating >= 1 && rating <= 5) {
+                                                List<String> currentComments = commentsByRating.get(rating);
+                                                int currentCount = commentCounts.getOrDefault(rating, 0);
+
+                                                // Apply limit if enabled and current count is below limit
+                                                if (!applyLimit || (commentsLimit != null
+                                                                && currentCount < commentsLimit)) {
+                                                        currentComments.add(comment);
+                                                        commentCounts.put(rating, currentCount + 1);
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                report.setCommentsForEachRating(commentsByRating);
+                return report;
+        }
+
+        private Map<String, Object> getFeedbackNoAndAverageRatings(Integer eventId) {
+                List<Object[]> feedbackSummary = feedbackRepo.findTotalEntriesAndAverageRatingByEventId(eventId);
+                int totalFeedbackEntries = 0;
+                double averageRating = 0.0;
+
+                if (feedbackSummary != null && !feedbackSummary.isEmpty()) {
+                        Object[] data = feedbackSummary.get(0);
+                        if (data[0] instanceof Long) {
+                                totalFeedbackEntries = ((Long) data[0]).intValue();
+                                System.out.println(totalFeedbackEntries);
+                        }
+                        if (data[1] instanceof Double) {
+                                averageRating = (Double) data[1];
+                        }
+                }
+
+                Map<String, Object> summary = new HashMap<>();
+                summary.put("feedbackEntries", totalFeedbackEntries);
+                summary.put("averageRating", averageRating);
+
+                return summary;
+        }
+
+        private Map<String, Long> getRatingsDistribution(Integer eventId) {
+                List<Object[]> ratingsDistributionData = feedbackRepo.findRatingsDistributionByEventId(eventId);
+                Map<String, Long> ratingsDistribution = new HashMap<>();
+                if (ratingsDistributionData != null) {
+                        for (Object[] row : ratingsDistributionData) {
+                                if (row[0] instanceof Integer && row[1] instanceof Long) {
+                                        ratingsDistribution.put((String.valueOf(row[0])), ((Long) row[1]));
+                                }
+                        }
+                }
+                return ratingsDistribution;
         }
 }

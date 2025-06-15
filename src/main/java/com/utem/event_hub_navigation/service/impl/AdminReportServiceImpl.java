@@ -3,8 +3,8 @@ package com.utem.event_hub_navigation.service.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +27,8 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
 import com.utem.event_hub_navigation.model.VenueUtilizationData;
+import com.utem.event_hub_navigation.repo.VenueRepo;
 import com.utem.event_hub_navigation.utils.ReportGeneratorUtils;
-import com.utem.event_hub_navigation.utils.SupabaseStorageService;
 
 @Service
 public class AdminReportServiceImpl {
@@ -52,7 +52,7 @@ public class AdminReportServiceImpl {
     private static final float HEADER_SPACING = 20f;
 
     @Autowired
-    private SupabaseStorageService supabaseStorageService;
+    private VenueRepo venueRepo;
 
     // --- Mock Data Class (for demonstration purposes) ---
    
@@ -65,51 +65,45 @@ public class AdminReportServiceImpl {
      * @throws DocumentException If there's an error creating or adding elements to the PDF.
      * @throws IOException If there's an error reading image data (for mock charts).
      */
-    public void generateMockVenueUtilizationReport() throws DocumentException, IOException {
+    public byte[] generateVenueUtilizationReport(LocalDateTime startDateTime, LocalDateTime endDateTime, List<Integer> venueIds) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4.rotate(), 50, 50, 50, 50);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         PdfWriter.getInstance(document, byteArrayOutputStream);
 
         document.open();
 
-        List<VenueUtilizationData> selectedVenues = createMockVenueData();
+        List<VenueUtilizationData> utilizationData = venueRepo.getVenueUtilizationData(startDateTime, endDateTime);
+        
+         // Filter venues if venueIds is provided
+         if (venueIds != null && !venueIds.isEmpty()) {
+
+            utilizationData = utilizationData.stream()
+                .filter(data -> venueIds.contains(data.getVenueId()))
+                .toList();
+        }
 
         addReportHeader(document);
-        addFilterSummary(document, "01 January 2025 - 30 June 2025", selectedVenues, createMockVenueData().size());
-        addSummaryStatistics(document, selectedVenues);
+        addFilterSummary(document, startDateTime.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")) + " - " + 
+            endDateTime.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), utilizationData, utilizationData.size());
+        addSummaryStatistics(document, utilizationData);
         
+       
         // Add page break before summary visualizations
         document.newPage();
-        addSummaryVisualizations(document, selectedVenues);
+        addSummaryVisualizations(document, utilizationData);
         
         // Add page break before detailed statistics
         document.newPage();
-        addDetailedTable(document, selectedVenues);
+        addDetailedTable(document, utilizationData);
         addAssumptionsAndFormulas(document);
 
         document.close();
-        // return byteArrayOutputStream.toByteArray();
-
-        String fileUrl = supabaseStorageService.uploadFile(byteArrayOutputStream.toByteArray(), "event-report", "venue-utilization.pdf");
-
-    }
-
-    /**
-     * Creates and returns a list of mock VenueUtilizationData objects.
-     */
-    private List<VenueUtilizationData> createMockVenueData() {
-        List<VenueUtilizationData> mockData = new ArrayList<>();
-        mockData.add(new VenueUtilizationData("Auditorium C01", 300, 180, 75.0, 10, 2500, 83.3, 62.5));
-        // mockData.add(new VenueUtilizationData("Lab B.1.2", 25, 150, 85.7, 40, 850, 85.0, 72.8));
-        mockData.add(new VenueUtilizationData("Meeting Rm F.3.4", 12, 40, 28.6, 8, 50, 52.1, 14.9));
-        mockData.add(new VenueUtilizationData("Classroom K-201", 30, 100, 71.4, 20, 450, 75.0, 53.6));
-        mockData.add(new VenueUtilizationData("Seminar Room A-3", 50, 160, 91.4, 18, 700, 77.8, 71.1));
-        mockData.add(new VenueUtilizationData("Computer Lab S-10", 40, 120, 85.7, 25, 800, 80.0, 68.6));
-        mockData.add(new VenueUtilizationData("Studio D-5", 15, 60, 42.8, 12, 100, 55.6, 23.8));
-        mockData.add(new VenueUtilizationData("Lecture Theatre T-1", 250, 100, 41.7, 5, 800, 64.0, 26.7));
-        mockData.add(new VenueUtilizationData("Breakout Room 7", 8, 20, 14.3, 4, 20, 62.5, 8.9));
-        mockData.add(new VenueUtilizationData("Conference Room M-1", 20, 70, 50.0, 7, 150, 78.6, 39.3));
-        return mockData;
+        
+        // // Upload to storage
+        // supabaseStorageService.uploadFile(byteArrayOutputStream.toByteArray(), "event-report", "venue-utilization.pdf");
+        
+        // Return the PDF bytes
+        return byteArrayOutputStream.toByteArray();
     }
 
 
@@ -159,12 +153,8 @@ public class AdminReportServiceImpl {
         filterHeader.setSpacingAfter(5f);
         document.add(filterHeader);
 
-     
         ReportGeneratorUtils.addKeyValueLine(document, "Date Range", dateRange, 0);
-
-        // addKeyValueLine(document, "Selected Venues", dateRange, 0);
-
-
+        ReportGeneratorUtils.addKeyValueLine(document, "Number of Venues Included", String.valueOf(selectedVenueData.size()), 0);
         
         document.add(Chunk.NEWLINE);
         document.add(new LineSeparator());
@@ -176,7 +166,7 @@ public class AdminReportServiceImpl {
         summaryHeader.setSpacingAfter(10f);
         document.add(summaryHeader);
 
-        long totalEventSessions = selectedVenueData.stream().mapToInt(d -> d.getEventSessions()).sum();
+        long totalEventSessions = selectedVenueData.stream().mapToLong(d -> d.getEventSessions()).sum();
         double avgTimeUtil = selectedVenueData.stream().mapToDouble(d -> d.getTimeUtilizationRate()).average().orElse(0.0);
         double avgSeatOccupancy = selectedVenueData.stream().mapToDouble(d -> d.getAverageRegisteredSeatOccupancy()).average().orElse(0.0);
         double avgOverallSpaceUtil = selectedVenueData.stream().mapToDouble(d -> d.getOverallSpaceUtilizationRate()).average().orElse(0.0);
@@ -306,7 +296,7 @@ public class AdminReportServiceImpl {
         table.setWidthPercentage(100); // Set table width to 100% of page width
         table.setSpacingAfter(HEADER_SPACING);
 
-        String[] headers = {"Venue Name", "Capacity", "Hours Booked", "Time Util. (%)", "Sessions", "Total Registered Attendance", "Avg. Registered Seat Occupancy (%)", "Overall Space Util. (%)"};
+        String[] headers = {"Venue Name", "Capacity", "Hours Booked", "Time Util. (%)", "Sessions", "Total Registered Participants", "Avg. Registered Seat Occupancy (%)", "Overall Space Util. (%)"};
         for (String header : headers) {
             PdfPCell headerCell = new PdfPCell(new Phrase(header, NORMAL_FONT)); // Use Phrase to apply font
             headerCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
@@ -317,14 +307,47 @@ public class AdminReportServiceImpl {
 
         // Populate table with data
         for (VenueUtilizationData data : selectedVenueData) {
-            table.addCell(new PdfPCell(new Phrase(data.getVenueName(), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.valueOf(data.getVenueCapacity()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.valueOf(data.getTotalHoursBooked()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.format("%.1f%%", data.getTimeUtilizationRate()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.valueOf(data.getEventSessions()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.valueOf(data.getTotalRegisteredAttendance()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.format("%.1f%%", data.getAverageRegisteredSeatOccupancy()), SMALL_FONT)));
-            table.addCell(new PdfPCell(new Phrase(String.format("%.1f%%", data.getOverallSpaceUtilizationRate()), SMALL_FONT)));
+            // Venue Name - align left
+            PdfPCell venueNameCell = new PdfPCell(new Phrase(data.getVenueName(), SMALL_FONT));
+            venueNameCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            venueNameCell.setPadding(5);
+            table.addCell(venueNameCell);
+            
+            // All other columns - align center
+            PdfPCell capacityCell = new PdfPCell(new Phrase(String.valueOf(data.getVenueCapacity()), SMALL_FONT));
+            capacityCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            capacityCell.setPadding(5);
+            table.addCell(capacityCell);
+            
+            PdfPCell hoursCell = new PdfPCell(new Phrase(String.valueOf(data.getTotalHoursBooked()), SMALL_FONT));
+            hoursCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            hoursCell.setPadding(5);
+            table.addCell(hoursCell);
+            
+            PdfPCell timeUtilCell = new PdfPCell(new Phrase(String.format("%.1f", data.getTimeUtilizationRate()), SMALL_FONT));
+            timeUtilCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            timeUtilCell.setPadding(5);
+            table.addCell(timeUtilCell);
+            
+            PdfPCell sessionsCell = new PdfPCell(new Phrase(String.valueOf(data.getEventSessions()), SMALL_FONT));
+            sessionsCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            sessionsCell.setPadding(5);
+            table.addCell(sessionsCell);
+            
+            PdfPCell participantsCell = new PdfPCell(new Phrase(String.valueOf(data.getTotalRegisteredAttendance()), SMALL_FONT));
+            participantsCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            participantsCell.setPadding(5);
+            table.addCell(participantsCell);
+            
+            PdfPCell avgOccupancyCell = new PdfPCell(new Phrase(String.format("%.1f", data.getAverageRegisteredSeatOccupancy()), SMALL_FONT));
+            avgOccupancyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            avgOccupancyCell.setPadding(5);
+            table.addCell(avgOccupancyCell);
+            
+            PdfPCell overallUtilCell = new PdfPCell(new Phrase(String.format("%.1f", data.getOverallSpaceUtilizationRate()), SMALL_FONT));
+            overallUtilCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            overallUtilCell.setPadding(5);
+            table.addCell(overallUtilCell);
         }
         document.add(table);
      
@@ -337,9 +360,9 @@ public class AdminReportServiceImpl {
 
         Paragraph assumptionsList = new Paragraph();
         Font assumptionFont = new Font(Font.FontFamily.HELVETICA, 10, Font.ITALIC, BaseColor.GRAY);
-        assumptionsList.add(new Chunk("\u2022 Availability Definition: Total 'Available Hours' are calculated based on the university's defined operating hours for venues (e.g., Monday-Friday, 8:00 AM - 10:00 PM), excluding public holidays and university-wide closure days.\n", assumptionFont));
-        assumptionsList.add(new Chunk("\u2022 Attendance Basis: Attendance metrics are derived from the number of registered attendees for each event. It is important to note that these figures may overestimate actual physical presence in the venue.\n", assumptionFont));
-        assumptionsList.add(new Chunk("\u2022 Event Status: Only 'Confirmed' or 'Approved' events are included in utilization calculations; 'Draft', 'Cancelled', or 'Pending' events are excluded.\n", assumptionFont));
+        assumptionsList.add(new Chunk("\u2022 Availability Definition: Total 'Available Hours' are calculated based on the university's defined operating hours for venues (Monday-Thursday, 8:00 AM - 6:00 PM, Friday 8:00 AM - 12:15 PM, 2:45 PM - 5:00 PM).\n", assumptionFont));
+        assumptionsList.add(new Chunk("\u2022 Participants Basis: Participation metrics are derived from the number of registered participants for each event. It is important to note that these figures may overestimate actual physical presence in the venue.\n", assumptionFont));
+        assumptionsList.add(new Chunk("\u2022 Event Status: Only 'Active' events are included in utilization calculations.\n", assumptionFont));
         document.add(assumptionsList);
         document.add(Chunk.NEWLINE);
 
@@ -353,7 +376,7 @@ public class AdminReportServiceImpl {
         formulasList.add(new Chunk("\u2022 Time Utilization Rate (%): ", formulaLabelFont));
         formulasList.add(new Chunk("(Sum of (Event End Time - Event Start Time)) / Total Defined Available Hours for Period * 100\n", formulaFont));
         formulasList.add(new Chunk("\u2022 Average Registered Seat Occupancy (%): ", formulaLabelFont));
-        formulasList.add(new Chunk("(Total Registered Attendance for All Events in Venue) / (Venue Capacity * Number of Event Sessions) * 100\n", formulaFont));
+        formulasList.add(new Chunk("(Total Registered Participants for All Events in Venue) / (Venue Capacity * Number of Event Sessions) * 100\n", formulaFont));
         formulasList.add(new Chunk("\u2022 Overall Space Utilization Rate (%): ", formulaLabelFont));
         formulasList.add(new Chunk("(Time Utilization Rate (%) * Average Registered Seat Occupancy (%)) / 100\n", formulaFont));
         document.add(formulasList);

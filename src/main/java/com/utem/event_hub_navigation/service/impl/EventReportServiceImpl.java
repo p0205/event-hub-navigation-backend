@@ -328,7 +328,7 @@ public class EventReportServiceImpl implements EventReportService {
                         String filename = UUID.randomUUID() + "EventFeedbackReport_" + eventId + ".pdf";
 
                         return generateFeedbackReportPDF(reportData,
-                                        "EventFeedbackReport_" + eventId + ".pdf",
+                                        filename,
                                         commentsLimit);
 
                         // Generate a unique, sanitized filename

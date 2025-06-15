@@ -1,16 +1,20 @@
 package com.utem.event_hub_navigation.controller;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.itextpdf.text.DocumentException;
+import com.utem.event_hub_navigation.dto.VenueUtilizationReportRequest;
 import com.utem.event_hub_navigation.service.impl.AdminReportServiceImpl;
 
 @RestController
@@ -18,23 +22,31 @@ import com.utem.event_hub_navigation.service.impl.AdminReportServiceImpl;
 public class AdminReportController {
 
     private final AdminReportServiceImpl adminReportService;
-
+  
     @Autowired
     public AdminReportController(AdminReportServiceImpl adminReportService) {
         this.adminReportService = adminReportService;
     }
 
-    @GetMapping("/venue-utilization")
-    public ResponseEntity<byte[]> generateVenueUtilizationReport() {
+    @PostMapping("/venue-utilization")
+    public ResponseEntity<byte[]> generateVenueUtilizationReportPost(
+            @RequestBody VenueUtilizationReportRequest request) {
+               
         try {
-            adminReportService.generateMockVenueUtilizationReport();
+            byte[] pdfBytes = adminReportService.generateVenueUtilizationReport(
+                request.getStartDateTime(), 
+                request.getEndDateTime(), 
+                request.getVenueIds()
+            );
             
-            // HttpHeaders headers = new HttpHeaders();
-            // headers.setContentType(MediaType.APPLICATION_PDF);
-            // headers.setContentDispositionFormData("attachment", "venue-utilization-report.pdf");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "venue-utilization-report.pdf");
             
             return ResponseEntity
-                    .ok().build();
+                    .ok()
+                    .headers(headers)
+                    .body(pdfBytes);
                     
         } catch (DocumentException | IOException e) {
             return ResponseEntity.internalServerError().build();

@@ -10,13 +10,13 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class VenueUtilizationData {
+    private Integer venueId;
     private String venueName;
-    private int venueCapacity;
-    private int totalHoursBooked;
+    private Integer venueCapacity;
+    private Long totalHoursBooked;
     private double timeUtilizationRate;
-    private int eventSessions;
-    private int totalRegisteredAttendance;
+    private Long eventSessions;
+    private Long totalRegisteredAttendance;
     private double averageRegisteredSeatOccupancy;
     private double overallSpaceUtilizationRate;
-
 }

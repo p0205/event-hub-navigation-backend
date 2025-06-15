@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
@@ -35,10 +37,11 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.TabSettings;
 import com.itextpdf.text.TabStop;
+
 public class ReportGeneratorUtils {
 
-    private static final com.itextpdf.text.Font NORMAL_FONT = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.NORMAL);
-   
+    private static final com.itextpdf.text.Font NORMAL_FONT = new com.itextpdf.text.Font(
+            com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.NORMAL);
 
     public static Image generatePieChartImage(String title, Map<String, Long> data)
             throws IOException, com.itextpdf.text.BadElementException {
@@ -195,7 +198,7 @@ public class ReportGeneratorUtils {
 
     private static void customizeBarChart(JFreeChart chart) {
         CategoryPlot plot = chart.getCategoryPlot();
-        
+
         // Set background paint
         plot.setBackgroundPaint(Color.WHITE);
         plot.setOutlinePaint(null);
@@ -205,15 +208,15 @@ public class ReportGeneratorUtils {
         renderer.setSeriesPaint(0, new Color(51, 102, 204)); // Set bar color
         renderer.setDrawBarOutline(true);
         renderer.setBarPainter(new org.jfree.chart.renderer.category.StandardBarPainter());
-        
+
         // Customize the domain axis (X-axis)
         plot.getDomainAxis().setLabelFont(new Font("SansSerif", Font.BOLD, 12));
         plot.getDomainAxis().setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
-        
+
         // Customize the range axis (Y-axis)
         plot.getRangeAxis().setLabelFont(new Font("SansSerif", Font.BOLD, 12));
         plot.getRangeAxis().setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
-        
+
         // Customize the title
         chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 15));
         chart.getTitle().setHorizontalAlignment(HorizontalAlignment.CENTER);
@@ -240,8 +243,8 @@ public class ReportGeneratorUtils {
                 false // Generate URLs
         );
 
-        // Customize the chart
-        customizeScatterPlot(scatterPlot);
+        // Customize the chart and handle zero data
+        customizeScatterPlot(scatterPlot, yValues);
 
         // Generate the image bytes
         ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
@@ -253,9 +256,9 @@ public class ReportGeneratorUtils {
         return chartImage;
     }
 
-    private static void customizeScatterPlot(JFreeChart chart) {
+    private static void customizeScatterPlot(JFreeChart chart, Map<String, Double> yValues) {
         XYPlot plot = chart.getXYPlot();
-        
+
         // Set background paint
         plot.setBackgroundPaint(Color.WHITE);
         plot.setOutlinePaint(null);
@@ -265,23 +268,32 @@ public class ReportGeneratorUtils {
         renderer.setSeriesPaint(0, new Color(51, 102, 204)); // Set point color
         renderer.setSeriesShape(0, new java.awt.geom.Ellipse2D.Double(-4, -4, 8, 8)); // Set point shape
         plot.setRenderer(renderer);
-        
+
+        // Check if all Y values are zero
+        boolean allYValuesZero = yValues.values().stream().allMatch(value -> value == 0.0);
+
+        // Customize the range axis (Y-axis)
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        if (allYValuesZero) {
+            // Set custom range when all values are zero
+            rangeAxis.setRange(0, 100);
+            rangeAxis.setTickUnit(new NumberTickUnit(10));
+            rangeAxis.setAutoRange(false);
+        }
+        rangeAxis.setLabelFont(new Font("SansSerif", Font.BOLD, 12));
+        rangeAxis.setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
+
         // Customize the domain axis (X-axis)
         plot.getDomainAxis().setLabelFont(new Font("SansSerif", Font.BOLD, 12));
         plot.getDomainAxis().setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
-        
-        // Customize the range axis (Y-axis)
-        plot.getRangeAxis().setLabelFont(new Font("SansSerif", Font.BOLD, 12));
-        plot.getRangeAxis().setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
-        
+
         // Customize the title
         chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 15));
         chart.getTitle().setHorizontalAlignment(HorizontalAlignment.CENTER);
-        
+
         // Customize the legend
         chart.getLegend().setItemFont(new Font("SansSerif", Font.PLAIN, 12));
         chart.getLegend().setBackgroundPaint(Color.WHITE);
         chart.getLegend().setFrame(BlockBorder.NONE);
     }
-
 }

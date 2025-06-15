@@ -1,11 +1,13 @@
 package com.utem.event_hub_navigation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.utem.event_hub_navigation.model.Venue;
+import com.utem.event_hub_navigation.model.VenueUtilizationData;
 import com.utem.event_hub_navigation.repo.VenueRepo;
 import com.utem.event_hub_navigation.service.VenueService;
 
@@ -43,5 +45,8 @@ public class VenueServiceImpl implements VenueService {
         return venueRepo.findByCapacityGreaterThanEqual(capacity);
     }
 
-
+    @Override
+    public List<VenueUtilizationData> getVenueUtilizationData(LocalDateTime startDate, LocalDateTime endDate) {
+        return venueRepo.getVenueUtilizationData(startDate, endDate);
+    }
 }

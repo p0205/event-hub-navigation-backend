@@ -19,6 +19,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 @Entity
@@ -66,5 +68,12 @@ public class User {
 
     @LastModifiedDate
     private LocalDateTime lastUpdatedAt;
+
+    private Boolean mustChangePassword;
+
+    
+    @Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+    private AccountStatus status;
 
 }

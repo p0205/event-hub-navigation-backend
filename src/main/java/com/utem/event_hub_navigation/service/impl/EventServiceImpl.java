@@ -1,7 +1,6 @@
 package com.utem.event_hub_navigation.service.impl;
 
-
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
@@ -20,6 +19,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -185,15 +185,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-     public EventDTO prepareAndValidateEvent(
-        String name,
-        String description,
-        String organizerIdString,
-        String participantsNoString,
-        String sessionsJson,
-        String eventBudgetsJson,
-        MultipartFile supportingDocument,
-        String typeString){
+    public EventDTO prepareAndValidateEvent(
+            String name,
+            String description,
+            String organizerIdString,
+            String participantsNoString,
+            String sessionsJson,
+            String eventBudgetsJson,
+            MultipartFile supportingDocument,
+            String typeString) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -220,12 +220,12 @@ public class EventServiceImpl implements EventService {
         dto.setEventBudgets(budgets);
 
         EventType type;
-    try {
-        type = EventType.valueOf(typeString.toUpperCase());
-    } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException("Invalid event type: " + typeString + 
-            ". Valid types are: " + Arrays.toString(EventType.values()));
-    }
+        try {
+            type = EventType.valueOf(typeString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid event type: " + typeString +
+                    ". Valid types are: " + Arrays.toString(EventType.values()));
+        }
         dto.setType(type);
 
         if (supportingDocument != null && !supportingDocument.isEmpty()) {
@@ -321,7 +321,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventDTO getEventDTOById(Integer id) {
         Optional<Event> optionalEvent = eventRepo.findById(id);
-        
+
         return eventMapper.toDto(optionalEvent.get());
 
     }
@@ -715,4 +715,54 @@ public class EventServiceImpl implements EventService {
             throw new Exception("Error fetching event details: " + e.getMessage(), e);
         }
     }
-}
+
+    @Override
+    public byte[] exportParticipants(Integer eventId) throws IOException {
+        List<Registration> registrations = registrationRepo.findByEvent_Id(eventId);
+
+        List<UserDTO> participants = registrations.stream()
+                .map(registration -> userMapper.toUserDTO(registration.getParticipant()))
+                .collect(Collectors.toList());
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Attendance");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = { "No", "Name", "Email", "Contact Number", "Gender","Faculty", "Course", "Year",
+                    };
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Populate data rows
+            int rowNum = 1;
+            for (UserDTO participant : participants) {
+                Row row = sheet.createRow(rowNum++);
+             
+                row.createCell(0).setCellValue(rowNum-1);
+                row.createCell(1).setCellValue(participant.getName());
+                row.createCell(2).setCellValue(participant.getEmail());
+                row.createCell(3).setCellValue(participant.getPhoneNo());
+                row.createCell(4).setCellValue(participant.getGender());
+                row.createCell(5).setCellValue(participant.getFaculty());
+                row.createCell(6).setCellValue(participant.getCourse());
+                row.createCell(7).setCellValue(participant.getYear());
+      
+            }
+
+    // Auto-size columns for better readability (optional, can be performance
+    // intensive for very large datasets)
+    for(
+
+    int i = 0;i<headers.length;i++)
+    {
+        sheet.autoSizeColumn(i);
+    }
+
+    workbook.write(baos);return baos.toByteArray();
+
+}}}

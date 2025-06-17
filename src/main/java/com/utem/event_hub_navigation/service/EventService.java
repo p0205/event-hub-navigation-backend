@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -62,6 +63,8 @@ public interface EventService {
     List<UserDTO> getParticipantsInfoFromFile(MultipartFile file);
 
     List<UserDTO> importParticipants(Integer eventId, List<UserDTO> participants);
+
+    byte[]  exportParticipants(Integer eventId)  throws IOException ;
 
     Page<UserDTO> getParticipantsByEventId(Integer eventId, Pageable pageable);
 

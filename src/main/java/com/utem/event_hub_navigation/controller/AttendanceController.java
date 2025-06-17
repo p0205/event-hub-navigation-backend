@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -119,6 +120,51 @@ public class AttendanceController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportAttendanceXlsx( // Changed method name
+    
+            @PathVariable Integer sessionId,
+            @RequestParam(required = false) String sessionName) { // sessionName is optional for filename
+
+        try {
+            // Generate the XLSX data using the service
+            byte[] xlsxBytes = attendanceService.exportAttendanceXLSX(sessionId); // Call new XLSX service method
+
+            // Determine the filename based on sessionName or default
+            String filename;
+            if (sessionName != null && !sessionName.trim().isEmpty()) {
+                // Sanitize session name for filename (replace spaces with underscores, remove special chars)
+                String sanitizedSessionName = sessionName.replaceAll("[^a-zA-Z0-9.-]", "_");
+                filename = String.format("attendance-%s.xlsx", sanitizedSessionName); // Changed extension to .xlsx
+            } else {
+                filename = String.format("attendance-session-%d.xlsx", sessionId); // Changed extension to .xlsx
+            }
+
+            // Set HTTP Headers for file download
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")); // Changed Content-Type for XLSX
+            // Force download and specify filename
+            headers.setContentDispositionFormData("attachment", filename);
+            // Set content length for better download progress indication
+            headers.setContentLength(xlsxBytes.length);
+
+            // Return the XLSX bytes with appropriate headers
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(xlsxBytes);
+
+        } catch (IOException e) {
+            // Log the error and return an internal server error status
+            System.err.println("Error generating XLSX for  session " + sessionId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        } catch (Exception e) {
+            // Catch any other unexpected errors
+            System.err.println("An unexpected error occurred during XLSX export for session " + sessionId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 

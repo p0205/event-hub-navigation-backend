@@ -1,6 +1,8 @@
 package com.utem.event_hub_navigation.repo;
 
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,6 +46,25 @@ public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
                          WHERE a.session_id = :sessionId
                     """, nativeQuery = true)
     Page<Attendee> findCheckInParticipantsBySession(@Param("sessionId") Integer sessionId, Pageable pageable);
+
+    // Spring Data JPA will automatically apply LIMIT and OFFSET based on Pageable
+    @Query(value = """
+                SELECT u.id AS userId,
+                       u.name AS name,
+                       u.email AS email,
+                       u.phone_no AS phoneNo,
+                       u.gender AS gender,
+                       u.faculty AS faculty,
+                       u.course AS course,
+                       u.year AS year,
+                       a.checkin_date_time AS checkinDateTime
+                FROM attendance a
+                JOIN registration r ON a.registration_id = r.id
+                JOIN users u ON r.user_id = u.id
+                WHERE a.session_id = :sessionId
+            """,
+            nativeQuery = true)
+    List<Attendee> findCheckInParticipantsBySession(@Param("sessionId") Integer sessionId);
 
     @Query("SELECT count(a) FROM Attendance a JOIN a.session s WHERE s.id = :sessionId")
     int countBySessionId(Integer sessionId);

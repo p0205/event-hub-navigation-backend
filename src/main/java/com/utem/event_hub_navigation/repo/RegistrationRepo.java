@@ -27,6 +27,8 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
 
     Page<Registration> findByEvent(Event event, Pageable pageable);
 
+    List<Registration> findByEvent_Id(Integer eventId);
+
     Boolean existsByEventAndParticipant(Event event, User user);
 
     @Query("SELECT count(r.id) FROM Registration r WHERE r.event.id = :eventId")

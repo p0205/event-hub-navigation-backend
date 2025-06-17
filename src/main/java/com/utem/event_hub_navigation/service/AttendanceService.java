@@ -1,7 +1,7 @@
 package com.utem.event_hub_navigation.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,5 +17,7 @@ public interface AttendanceService {
 
     String checkIn(String payload, Integer participantId) throws Exception;
 
-    Page<Attendee> getCheckInParticipants(Integer sessionId,Pageable pageable);
+    Page<Attendee> getCheckInParticipants(Integer sessionId, Pageable pageable);
+
+    public byte[] exportAttendanceXLSX(Integer sessionId) throws IOException ;
 }

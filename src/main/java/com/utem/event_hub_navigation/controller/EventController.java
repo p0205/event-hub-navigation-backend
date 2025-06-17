@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +32,6 @@ import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
-import com.utem.event_hub_navigation.model.EventType;
 import com.utem.event_hub_navigation.service.EventService;
 
 @RestController
@@ -207,6 +208,46 @@ System.out.println("create new event");
 
         List<UserDTO> participantList = eventService.getParticipantsInfoFromFile(file);
         return ResponseEntity.ok(participantList);
+    }
+
+
+     @GetMapping("/{eventId}/participants/export")
+    public ResponseEntity<byte[]> exportParticipants( // Changed method name
+    
+            @PathVariable Integer eventId) { // sessionName is optional for filename
+
+        try {
+            // Generate the XLSX data using the service
+            byte[] xlsxBytes = eventService.exportParticipants(eventId); // Call new XLSX service method
+
+            // Determine the filename based on sessionName or default
+            String filename;
+           
+                filename = String.format("participants-event-%d.xlsx", eventId); // Changed extension to .xlsx
+            
+
+            // Set HTTP Headers for file download
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")); // Changed Content-Type for XLSX
+            // Force download and specify filename
+            headers.setContentDispositionFormData("attachment", filename);
+            // Set content length for better download progress indication
+            headers.setContentLength(xlsxBytes.length);
+
+            // Return the XLSX bytes with appropriate headers
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(xlsxBytes);
+
+        } catch (IOException e) {
+            // Log the error and return an internal server error status
+            System.err.println("Error generating XLSX for event " + eventId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        } catch (Exception e) {
+            // Catch any other unexpected errors
+            System.err.println("An unexpected error occurred during XLSX export for event " + eventId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     // Add participants to event

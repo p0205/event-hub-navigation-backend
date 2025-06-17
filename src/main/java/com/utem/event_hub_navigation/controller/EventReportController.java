@@ -25,6 +25,7 @@ public class EventReportController {
     public ResponseEntity<?> getEventAttendanceReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
+            System.out.println("DDWADAD");
             byte[] pdfBytes = eventReportService.generateEventAttendanceReport(eventId);
 
             HttpHeaders headers = new HttpHeaders();

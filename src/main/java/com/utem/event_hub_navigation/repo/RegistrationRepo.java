@@ -38,7 +38,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
             SELECT u.faculty, COUNT(u.id)
             FROM Registration r
             JOIN r.participant u
-            WHERE r.event.id = :eventId
+            WHERE r.event.id = :eventId AND u.faculty IS NOT NULL
             GROUP BY u.faculty
             """)
     List<Object[]> getDemographicDataGroupByFaculty(@Param("eventId") Integer eventId);
@@ -47,7 +47,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
             SELECT u.course, COUNT(u.id)
             FROM Registration r
             JOIN r.participant u
-            WHERE r.event.id = :eventId
+            WHERE r.event.id = :eventId AND u.course IS NOT NULL
             GROUP BY u.course
             """)
     List<Object[]> getDemographicDataGroupByCourse(@Param("eventId") Integer eventId);
@@ -56,7 +56,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
             SELECT u.year, COUNT(u.id)
             FROM Registration r
             JOIN r.participant u
-            WHERE r.event.id = :eventId
+            WHERE r.event.id = :eventId AND u.year IS NOT NULL
             GROUP BY u.year
             """)
     List<Object[]> getDemographicDataGroupByYear(@Param("eventId") Integer eventId);
@@ -71,7 +71,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
                 COUNT(u.id)
             FROM Registration r
             JOIN r.participant u
-            WHERE r.event.id = :eventId
+            WHERE r.event.id = :eventId AND u.gender IS NOT NULL
             GROUP BY u.gender
             """)
     List<Object[]> getDemographicDataGroupByGender(@Param("eventId") Integer eventId);

@@ -1,10 +1,13 @@
 package com.utem.event_hub_navigation.service.impl;
 
+
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +52,7 @@ import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventBudget;
 import com.utem.event_hub_navigation.model.EventBudgetKey;
 import com.utem.event_hub_navigation.model.EventStatus;
+import com.utem.event_hub_navigation.model.EventType;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.SessionVenue;
 import com.utem.event_hub_navigation.model.SessionVenueKey;
@@ -106,6 +110,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDTO createEvent(EventDTO dto) {
 
+        System.out.println(dto.getType());
         Event event = eventMapper.toEntity(dto);
         // 1. Set back-references
         List<Session> sessions = new ArrayList<>();
@@ -180,14 +185,15 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public EventDTO prepareAndValidateEvent(
-            String name,
-            String description,
-            String organizerIdString,
-            String participantsNoString,
-            String sessionsJson,
-            String eventBudgetsJson,
-            MultipartFile supportingDocument) {
+     public EventDTO prepareAndValidateEvent(
+        String name,
+        String description,
+        String organizerIdString,
+        String participantsNoString,
+        String sessionsJson,
+        String eventBudgetsJson,
+        MultipartFile supportingDocument,
+        String typeString){
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -212,6 +218,15 @@ public class EventServiceImpl implements EventService {
         dto.setParticipantsNo(participantsNo);
         dto.setSessions(venues);
         dto.setEventBudgets(budgets);
+
+        EventType type;
+    try {
+        type = EventType.valueOf(typeString.toUpperCase());
+    } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException("Invalid event type: " + typeString + 
+            ". Valid types are: " + Arrays.toString(EventType.values()));
+    }
+        dto.setType(type);
 
         if (supportingDocument != null && !supportingDocument.isEmpty()) {
             try {

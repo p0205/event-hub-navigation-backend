@@ -30,6 +30,7 @@ import com.utem.event_hub_navigation.dto.EventSimpleResponse;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
+import com.utem.event_hub_navigation.model.EventType;
 import com.utem.event_hub_navigation.service.EventService;
 
 @RestController
@@ -56,6 +57,7 @@ public class EventController {
     public ResponseEntity<EventDTO> createEvent(
             @RequestPart("name") String name,
             @RequestPart("description") String description,
+            @RequestPart("type") String type,
             @RequestPart("organizerId") String organizerIdString,
             @RequestPart("participantsNo") String participantsNoString,
             @RequestPart("sessions") String sessionsJson,
@@ -63,10 +65,11 @@ public class EventController {
             @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
                 name, description, organizerIdString,
-                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument);
-
+                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument,type);
+                // dto.setType(type);
+System.out.println("create new event");
         EventDTO savedEvent = eventService.createEvent(dto);
-
+        System.out.println("create new event end");
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
 
@@ -110,7 +113,7 @@ public class EventController {
         // loaded)
         EventDTO event = eventService.getEventDTOById(id);
         if (event != null)
-            return ResponseEntity.ok(eventService.getEventDTOById(id));
+            return ResponseEntity.ok(event);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 

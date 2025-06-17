@@ -1,0 +1,24 @@
+package com.utem.event_hub_navigation.model;
+
+public enum EventType {
+    TALK,
+    SEMINAR,
+    WORKSHOP,
+    CONFERENCE,
+    SYMPOSIUM,
+    HACKATHON,
+    CODE_CHALLENGE,
+    INNOVATION_PITCH,
+    BOOTCAMP,
+    CAREER_TALK,
+    SOFT_SKILLS_TRAINING,
+    STUDENT_FORUM,
+    CLUB_MEETING,
+    INDUSTRY_VISIT,
+    COMPANY_SHOWCASE,
+    NETWORKING_EVENT,
+    COMPETITION,
+    EXHIBITION,
+    FESTIVAL,
+    CULTURAL_EVENT
+}

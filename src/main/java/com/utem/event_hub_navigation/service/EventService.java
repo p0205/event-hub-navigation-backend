@@ -30,7 +30,8 @@ public interface EventService {
             String participantsNoString,
             String sessionsJson,
             String eventBudgetsJson,
-            MultipartFile supportingDocument);
+            MultipartFile supportingDocument,
+            String type);
 
     String getEventName(Integer eventId);
 

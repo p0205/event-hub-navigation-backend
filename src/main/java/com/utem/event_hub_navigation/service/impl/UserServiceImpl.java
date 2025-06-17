@@ -72,11 +72,14 @@ public class UserServiceImpl implements UserService {
             user.setCreatedAt(LocalDate.now());
             user.setPasswordHash(hashPassword);
             user.setPhoneNo(phoneNo);
-            System.out.println(user.toString());
+            user.setMustChangePassword(false);
+            user.setStatus(AccountStatus.ACTIVE);
+
+    
             userRepo.save(user);
             return true;
         } catch (Exception e) {
-
+           
             return false;
         }
     }
@@ -215,7 +218,7 @@ public class UserServiceImpl implements UserService {
         user.setPhoneNo(phoneNo);
         user.setGender(gender);
         user.setStatus(AccountStatus.ACTIVE);
-        user.setRole("PARTICIPANT"); // e.g., "PARTICIPANT" or "OUTSIDER"
+        user.setRole("PARTICIPANT"); 
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setMustChangePassword(true);
         user.setCreatedAt(LocalDate.now());

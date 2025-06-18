@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.utem.event_hub_navigation.dto.OutsiderAccountDTO;
 import com.utem.event_hub_navigation.dto.PasswordUpdateDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.User;
@@ -247,4 +246,34 @@ public class UserController {
                 .body("An error occurred while creating the account: " + e.getMessage());
         }
     }
+
+  
+
+    @PatchMapping("/{userId}/update_temp_password")
+    public ResponseEntity<?> updateOutsiderPassword(@PathVariable Integer userId, @RequestBody PasswordUpdateDTO updateDTO) {
+        try {
+            if (updateDTO.getOutsiderNewPassword() == null) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("New password must be at least 6 characters long");
+            }
+            boolean success = userService.updateOutsiderPassword(userId, updateDTO.getOutsiderNewPassword());
+            if (!success) {
+                return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("User not found with ID: " + userId);
+            }   
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred while updating the password: " + e.getMessage());
+        }
+    }
+
+   
 }

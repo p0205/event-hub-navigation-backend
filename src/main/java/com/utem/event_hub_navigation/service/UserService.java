@@ -35,7 +35,10 @@ public interface UserService {
     
     boolean updatePassword(Integer userId, String currentPassword, String newPassword);
 
+
     User createOutsiderAccount(String name, String email, String phoneNo, Character gender);
+
+    boolean updateOutsiderPassword(Integer userId, String newPassword);
 
     Page<UserDTO> getAllUsers(Pageable pageable);
 }

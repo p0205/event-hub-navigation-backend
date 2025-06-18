@@ -26,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     public String signIn(SignInRequest request) throws AuthenticationException {
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(request.getEmail(),
                 request.getRawPassword());
+    System.out.println("Attempting authentication for user: " + request.getRawPassword());
 
         Authentication authentication;
         try {

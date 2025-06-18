@@ -156,6 +156,10 @@ public class UserServiceImpl implements UserService {
 
             User user = userOpt.get();
 
+            System.out.println(currentPassword);
+            System.out.println(user.getPasswordHash());
+System.out.println("Encoded Current Password: " + passwordEncoder.encode(currentPassword));
+            System.out.println(passwordEncoder.matches(currentPassword, user.getPasswordHash()));
             // Verify current password
             if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
                 return false;
@@ -218,7 +222,8 @@ public class UserServiceImpl implements UserService {
         user.setPhoneNo(phoneNo);
         user.setGender(gender);
         user.setStatus(AccountStatus.ACTIVE);
-        user.setRole("PARTICIPANT"); 
+        user.setRole("PARTICIPANT");
+        
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setMustChangePassword(true);
         user.setCreatedAt(LocalDate.now());
@@ -236,6 +241,34 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer userId) {
         userRepo.deleteById(userId);
+    }
+
+    @Override
+    public boolean updateOutsiderPassword(Integer userId, String newPassword) {
+        try {
+            Optional<User> userOpt = userRepo.findById(userId);
+            if (userOpt.isEmpty()) {
+                return false;
+            }
+
+            User user = userOpt.get();
+            
+            // Encode the new password
+            String encodedPassword = passwordEncoder.encode(newPassword);
+            user.setPasswordHash(encodedPassword);
+            
+            // Set mustChangePassword to false since it's an outsider account
+            user.setMustChangePassword(false);
+            user.setLastUpdatedAt(LocalDateTime.now());
+            
+            userRepo.save(user);
+            
+            // Verify the password was encoded correctly
+            return passwordEncoder.matches(newPassword, user.getPasswordHash());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
 }

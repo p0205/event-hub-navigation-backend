@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import com.utem.event_hub_navigation.model.AccountStatus;
 import com.utem.event_hub_navigation.model.User;
 
 import java.util.List;
@@ -29,4 +30,14 @@ public interface UserRepo extends JpaRepository<User, Integer> {
     List<User> findByEmailOrName(@Param("email") String email, @Param("name") String name);
 
      Page<User> findAll(@NonNull Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM User u")
+    long countAllUsers();
+
+
+   @Query("SELECT COUNT(u) FROM User u WHERE u.status = :status")
+    long countByStatus(@Param("status") AccountStatus status);
+
+    
+
 }

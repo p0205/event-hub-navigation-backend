@@ -92,4 +92,6 @@ public interface EventService {
 
     public ParticipantEventDetails getEventDetails(Integer eventId) throws Exception;
 
+  
+
 }

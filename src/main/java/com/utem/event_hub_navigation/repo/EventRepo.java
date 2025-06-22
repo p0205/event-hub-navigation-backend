@@ -52,7 +52,6 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
             """, nativeQuery = true)
     List<CalendarEventDTO> findCalendarEntriesByOrganizerId(@Param("organizerId") Integer organizerId);
 
-
     List<Event> findByEndDateTimeBeforeAndStatus(LocalDateTime nowDateTime, EventStatus eventStatus);
 
     /**
@@ -68,7 +67,9 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                           e.id as event_id, e.name, e.description, r.register_date,
                           e.start_date_time, e.end_date_time,
                           organizer.name as organizer_name,
-                          pic.name as pic_name, pic.phone_no as pic_contact,
+                          pic.name as pic_name, 
+                          pic.phone_no as pic_contact,
+                          pic.email as pic_email,
                           s.id as session_id, s.session_name,
                           s.start_date_time as session_start, s.end_date_time as session_end,
                           v.id as venue_id, v.name as venue_name
@@ -89,28 +90,113 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                                     """, nativeQuery = true)
     List<Object[]> findEventDetailsById(@Param("eventId") int eventId);
 
-
     @Query(value = """
-        SELECT
-            e.id AS eventId,
-            e.name AS eventName,
-            s.id AS sessionId,
-            s.session_name AS sessionName,
-            s.start_date_time AS startDateTime,
-            s.end_date_time AS endDateTime,
-            COALESCE(GROUP_CONCAT(DISTINCT v.name SEPARATOR ', '), '') AS venueNames
-        FROM registration r
-        JOIN event e ON r.event_id = e.id
-        JOIN session s ON s.event_id = e.id
-        LEFT JOIN session_venue sv ON sv.session_id = s.id
-        LEFT JOIN venue v ON v.id = sv.venue_id
+                SELECT
+                    e.id AS eventId,
+                    e.name AS eventName,
+                    s.id AS sessionId,
+                    s.session_name AS sessionName,
+                    e.description AS description,
+                    e.type AS eventType,
+                    s.start_date_time AS startDateTime,
+                    s.end_date_time AS endDateTime,
+                    COALESCE(GROUP_CONCAT(DISTINCT v.name SEPARATOR ', '), '') AS venueNames
+                FROM registration r
+                JOIN event e ON r.event_id = e.id
+                JOIN session s ON s.event_id = e.id
+                LEFT JOIN session_venue sv ON sv.session_id = s.id
+                LEFT JOIN venue v ON v.id = sv.venue_id
 
-        WHERE 
-           s.start_date_time >= :startDateTime
-            AND s.start_date_time <= :endDateTime
-        GROUP BY s.id
-    """, nativeQuery = true)
-List<CalendarEventDTO> fetchAllCalendarEventByMonth(
-    @Param("startDateTime") LocalDateTime startDateTime,
+                WHERE
+                   s.start_date_time >= :startDateTime
+                    AND s.end_date_time <= :endDateTime
+                GROUP BY s.id
+            """, nativeQuery = true)
+    List<CalendarEventDTO> fetchAllCalendarEventByMonth(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query("SELECT COUNT(e) FROM Event e WHERE e.status = :status AND e.startDateTime >= :startDateTime AND e.endDateTime <= :endDateTime")
+    long countByStatus(@Param("status") EventStatus status, 
+                       @Param("startDateTime") LocalDateTime startDateTime,
+                       @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query(value = "SELECT DATE_FORMAT(e.start_date_time, '%Y-%m') as month, COUNT(e.id) as events " +
+            "FROM event e " +
+            "WHERE e.start_date_time >= :startDateTime " +
+            "AND e.end_date_time <= :endDateTime " +
+            "AND e.status = 'COMPLETED' " +
+            "GROUP BY month " +
+            "ORDER BY month ASC", nativeQuery = true)
+    List<Object[]> countEventsByMonth(@Param("startDateTime") LocalDateTime startDateTime,
+                                       @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query(value = "SELECT DATE_FORMAT(s.startDateTime, '%H:00') as hour, COUNT(s.id) as count " + 
+                    "FROM Session s "+ 
+                    "JOIN s.event e " +
+                    "WHERE s.startDateTime >= :startDateTime " +
+                    "AND s.endDateTime <= :endDateTime " +
+                    "AND e.startDateTime >= :startDateTime " +
+                    "AND e.endDateTime <= :endDateTime " +
+                    "AND e.status = 'COMPLETED' " +
+                    "GROUP BY hour " +
+                    "ORDER BY hour", nativeQuery = false)
+    List<Object[]> countSessionsByHour(@Param("startDateTime") LocalDateTime startDateTime,
     @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query(value = "SELECT e.type as name, COUNT(e.id) as value "+
+                    "FROM Event e " + 
+                    "WHERE e.startDateTime >= :startDateTime " +
+                    "AND e.endDateTime <= :endDateTime " +
+                    "AND e.status = 'COMPLETED' " +
+                    "GROUP BY e.type " +
+                    "ORDER BY value DESC LIMIT 5")
+    List<Object[]> countEventsByType(@Param("startDateTime") LocalDateTime startDateTime,
+    @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query(value = "SELECT v.name as name, COUNT(e.id) as count "+ 
+                    "FROM Event e " + 
+                    "JOIN e.sessions s " +
+                    "JOIN s.sessionVenues sv " +
+                    "JOIN sv.venue v " + 
+                    "WHERE e.startDateTime >= :startDateTime " +
+                    "AND e.endDateTime <= :endDateTime " +
+                    "AND e.status = 'COMPLETED' " +
+                    "GROUP BY v.name " +
+                    "ORDER BY count DESC LIMIT 5")
+    List<Object[]> findTop5VenuesByEventCount(@Param("startDateTime") LocalDateTime startDateTime,
+    @Param("endDateTime") LocalDateTime endDateTime);
+
+    @Query(
+        value = "SELECT " +
+                "  e.type as eventType, " +
+                "  COUNT(e.id) as eventsHeld, " +
+                "  COALESCE(" +
+                "    SUM(" +
+                "      (SELECT COUNT(r.id) " +
+                "       FROM registration r " +
+                "       WHERE r.event_id = e.id)" +
+                "    ), 0) as totalRegistrations, " +
+                "  COALESCE(" +
+                "    AVG((SELECT COUNT(r2.id) " +
+                "         FROM registration r2 " +
+                "         WHERE r2.event_id = e.id)), 0) as avgRegPerEvent, " +
+                "  COALESCE(" +
+                "    AVG(CASE WHEN e.participants_no > 0 THEN " +
+                "      (SELECT COUNT(r3.id) FROM registration r3 WHERE r3.event_id = e.id) * 100.0 / e.participants_no " +
+                "      ELSE NULL END), 0) as avgFillRate, " +
+                "  COALESCE(" +
+                "    AVG(CASE WHEN (SELECT COUNT(r4.id) FROM registration r4 WHERE r4.event_id = e.id) > 0 THEN " +
+                "      (SELECT COUNT(a.registration_id) FROM attendance a WHERE a.session_id IN (SELECT s.id FROM session s WHERE s.event_id = e.id)) * 100.0 / " +
+                "      (SELECT COUNT(r5.id) FROM registration r5 WHERE r5.event_id = e.id) " +
+                "      ELSE NULL END), NULL) as avgAttendanceRate " +
+                "FROM event e " +
+                "WHERE e.status = 'COMPLETED' " +
+                "  AND e.start_date_time >= :startDate " +
+                "  AND e.end_date_time <= :endDate " +
+                "GROUP BY e.type " +
+                "ORDER BY eventsHeld DESC",
+        nativeQuery = true
+    )
+    List<Object[]> fetchEventTypePerformanceData(@Param("startDate") String startDate, @Param("endDate") String endDate);
 }

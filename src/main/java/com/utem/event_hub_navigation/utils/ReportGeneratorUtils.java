@@ -163,21 +163,21 @@ public class ReportGeneratorUtils {
         document.add(paragraph);
     }
 
-    public static Image generateBarChartImage(String title, Map<String, Long> data)
+    public static Image generateBarChartImage(String title, Map<String, Long> data, String rowKey, PlotOrientation orientation, String x_label, String y_label)
             throws IOException, com.itextpdf.text.BadElementException {
         // 1. Create a Dataset
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         for (Map.Entry<String, Long> entry : data.entrySet()) {
-            dataset.addValue(entry.getValue(), "Venues", entry.getKey());
+            dataset.addValue(entry.getValue(), rowKey, entry.getKey());
         }
 
         // 2. Create a JFreeChart object
         JFreeChart barChart = ChartFactory.createBarChart(
                 title, // Chart title
-                "Utilization Rate Range", // X-axis label
-                "Number of Venues", // Y-axis label
+                x_label, // X-axis label
+                y_label, // Y-axis label
                 dataset, // Data
-                PlotOrientation.VERTICAL, // Orientation
+                orientation, // Orientation
                 false, // Include legend
                 true, // Generate tooltips
                 false // Generate URLs
@@ -295,5 +295,10 @@ public class ReportGeneratorUtils {
         chart.getLegend().setItemFont(new Font("SansSerif", Font.PLAIN, 12));
         chart.getLegend().setBackgroundPaint(Color.WHITE);
         chart.getLegend().setFrame(BlockBorder.NONE);
+    }
+
+
+    public static String formatStringRemoveUnderscore(String text){
+        return text.replace("_", " ");
     }
 }

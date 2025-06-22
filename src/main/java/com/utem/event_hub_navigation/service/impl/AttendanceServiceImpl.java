@@ -2,8 +2,6 @@ package com.utem.event_hub_navigation.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -180,7 +178,7 @@ public class AttendanceServiceImpl implements AttendanceService {
             int rowNum = 1;
             for (Attendee record : attendanceRecords) {
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(rowNum);
+                row.createCell(0).setCellValue(rowNum-1);
                 row.createCell(1).setCellValue(record.getName());
                 row.createCell(2).setCellValue(record.getEmail());
                 row.createCell(3).setCellValue(record.getPhoneNo());

@@ -297,12 +297,15 @@ System.out.println("create new event");
         }
     }
 
-    // MOBILE APP APIs
+
     // Get calender events to be displayed
     @GetMapping("/calendar/all-events")
     public ResponseEntity<?> getAllEventsByMonth( @RequestParam("startDateTime") LocalDateTime startDateTime,
     @RequestParam("endDateTime") LocalDateTime endDateTime) {
         try {
+            System.out.println("Start Date: " + startDateTime);
+            System.out.println("End Date: " + endDateTime);
+            
             return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime,endDateTime));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -310,6 +313,7 @@ System.out.println("create new event");
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
+
     
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {

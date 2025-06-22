@@ -21,11 +21,10 @@ public class EventReportController {
     @Autowired
     private EventReportServiceImpl eventReportService;
 
-    @GetMapping("/attendance")
+    @GetMapping("/attendance/pdf")
     public ResponseEntity<?> getEventAttendanceReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
-            System.out.println("DDWADAD");
             byte[] pdfBytes = eventReportService.generateEventAttendanceReport(eventId);
 
             HttpHeaders headers = new HttpHeaders();
@@ -39,11 +38,11 @@ public class EventReportController {
         }
     }
 
-    @GetMapping("/budget")
+    @GetMapping("/attendance")
     public ResponseEntity<?> getEventBudgetReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
-            eventReportService.storeReport(eventId, ReportType.BUDGET);
+            eventReportService.storeReport(eventId, ReportType.ATTENDANCE);
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {

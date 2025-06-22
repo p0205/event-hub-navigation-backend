@@ -26,6 +26,7 @@ public class ParticipantEventDetails {
     private String organizerName;
     private String picName;
     private String picContact;
+    private String picEmail;
     @Builder.Default
     private List<ParticipantEventDetailsSessionDTO> sessions = new ArrayList<>();
     

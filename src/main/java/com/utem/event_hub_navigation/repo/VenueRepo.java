@@ -37,6 +37,7 @@ public interface VenueRepo extends JpaRepository<Venue, Integer> {
         LEFT JOIN Event e ON s.event.id = e.id
         LEFT JOIN Registration r ON e.id = r.event.id
         GROUP BY v.id, v.name, v.capacity
+        HAVING COALESCE(SUM(TIMESTAMPDIFF(HOUR, s.startDateTime, s.endDateTime)), 0) > 0
         ORDER BY v.name
     """)
     List<VenueUtilizationData> getVenueUtilizationData(

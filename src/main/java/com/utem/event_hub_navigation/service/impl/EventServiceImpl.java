@@ -576,7 +576,9 @@ public class EventServiceImpl implements EventService {
     public List<CalendarEventDTO> getAllCalendarEventByMonth(LocalDateTime startDateTime,
             LocalDateTime endDateTime) throws Exception {
         try {
-            return eventRepo.fetchAllCalendarEventByMonth(startDateTime, endDateTime);
+            List<CalendarEventDTO> eventList = eventRepo.fetchAllCalendarEventByMonth(startDateTime, endDateTime);
+         
+            return eventList;
         } catch (Exception e) {
             throw new Exception(e.getMessage());
         }
@@ -599,10 +601,7 @@ public class EventServiceImpl implements EventService {
 
             List<CalendarEventDTO> response = registrationRepo.fetchParticipantEventsByDateRange(userID,
                     startDateTime, endDateTime);
-            System.out.println(startDateTime);
-            System.out.println(endDateTime);
-
-            System.out.println(response);
+           
             return response;
         } catch (Exception e) {
             throw new Exception(e.getMessage());
@@ -647,7 +646,6 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public ParticipantEventDetails getEventDetails(Integer eventId) throws Exception {
-
         try {
             List<Object[]> rows = eventRepo.findEventDetailsById(eventId);
             ParticipantEventDetails event = new ParticipantEventDetails();
@@ -671,32 +669,33 @@ public class EventServiceImpl implements EventService {
                     event.setOrganizerName((String) row[6]);
                     event.setPicName((String) row[7]);
                     event.setPicContact((String) row[8]);
+                    event.setPicEmail((String) row[9]);
                 }
 
-                Integer sessionId = (Integer) row[9];
+                Integer sessionId = (Integer) row[10];
                 if (sessionId != null) {
                     ParticipantEventDetailsSessionDTO session = sessionMap.get(sessionId);
                     if (session == null) {
                         session = new ParticipantEventDetailsSessionDTO();
                         session.setId(sessionId);
-                        session.setSessionName((String) row[10]);
+                        session.setSessionName((String) row[11]);
 
-                        java.sql.Timestamp sessionStartTimestamp = (java.sql.Timestamp) row[11];
+                        java.sql.Timestamp sessionStartTimestamp = (java.sql.Timestamp) row[12];
                         session.setStartDateTime(
                                 sessionStartTimestamp != null ? sessionStartTimestamp.toLocalDateTime() : null);
 
-                        java.sql.Timestamp sessionEndTimestamp = (java.sql.Timestamp) row[12];
+                        java.sql.Timestamp sessionEndTimestamp = (java.sql.Timestamp) row[13];
                         session.setEndDateTime(
                                 sessionEndTimestamp != null ? sessionEndTimestamp.toLocalDateTime() : null);
 
                         sessionMap.put(sessionId, session);
                     }
 
-                    Integer venueId = (Integer) row[13];
+                    Integer venueId = (Integer) row[14];
                     if (venueId != null) {
                         ParticipantEventDetailsVenueDTO venue = new ParticipantEventDetailsVenueDTO();
                         venue.setId(venueId);
-                        venue.setName((String) row[14]);
+                        venue.setName((String) row[15]);
 
                         // Check if this venue is already added
                         boolean venueExists = session.getVenues().stream()
@@ -747,7 +746,7 @@ public class EventServiceImpl implements EventService {
                 row.createCell(1).setCellValue(participant.getName());
                 row.createCell(2).setCellValue(participant.getEmail());
                 row.createCell(3).setCellValue(participant.getPhoneNo());
-                row.createCell(4).setCellValue(participant.getGender());
+                row.createCell(4).setCellValue(String.valueOf(participant.getGender()));
                 row.createCell(5).setCellValue(participant.getFaculty());
                 row.createCell(6).setCellValue(participant.getCourse());
                 row.createCell(7).setCellValue(participant.getYear());

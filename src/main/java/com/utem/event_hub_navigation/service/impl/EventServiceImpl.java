@@ -240,7 +240,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        dto.setStatus(EventStatus.PENDING);
+        dto.setStatus(EventStatus.ACTIVE);
         return dto;
     }
 

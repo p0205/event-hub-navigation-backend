@@ -21,7 +21,7 @@ import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.service.TeamService;
 
 @RestController
-@RequestMapping("/events/{eventId}/teams")
+@RequestMapping("/api/events/{eventId}/teams")
 public class TeamController {
 
     private final TeamService teamService;
@@ -50,14 +50,16 @@ public class TeamController {
     // Add team member
     @PostMapping
     public ResponseEntity<?> addTeamMembers(@PathVariable("eventId") Integer eventId,
-            @RequestParam List<Integer> userId, @RequestParam Integer roleId) {
+            @RequestParam List<Integer> userIds, @RequestParam Integer roleId) {
         try {
-            teamService.addTeamMembers(eventId, userId, roleId);
+            teamService.addTeamMembers(eventId, userIds, roleId);
 
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.internalServerError().body("Failed to add member: " + e.getMessage());
         }
     }
@@ -92,7 +94,8 @@ public class TeamController {
 
         try {
             List<UserDTOByTeamSearch> users = teamService.searchUsers(eventId, query,roleId);
-
+           
+               
             return ResponseEntity.ok(users);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -106,11 +109,14 @@ public class TeamController {
     public ResponseEntity<?> removeTeamMember(@PathVariable("eventId") Integer eventId,
             @PathVariable("userId") Integer userId) {
         try {
+            System.out.println("Deleting team members...");
             teamService.removeTeamMember(eventId, userId);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
+            System.out.println(e.toString());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            System.out.println(e.toString());
             return ResponseEntity.internalServerError().body("Failed to remove member: " + e.getMessage());
         }
     }

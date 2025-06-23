@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 
 
-public class Feedback {
+public class Feedback implements Serializable{
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +30,7 @@ public class Feedback {
 
     @OneToOne
     @JoinColumn(name = "registration_id",nullable = false)
-    private Registration registrationId;
+    private Registration registration;
 
     private Integer rating;
     private String comment;

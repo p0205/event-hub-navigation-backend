@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,13 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.utem.event_hub_navigation.dto.EmailCheckResponse;
 import com.utem.event_hub_navigation.dto.SignInRequest;
 import com.utem.event_hub_navigation.dto.SignUpRequest;
+import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.service.AuthService;
 import com.utem.event_hub_navigation.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -63,7 +65,6 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
-
         try {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
@@ -73,10 +74,11 @@ public class AuthController {
                     .sameSite("Strict")
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry
                     .build();
-
+                   
+            UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                    .body("Login successful");
+                    .body(authenticatUserDTO);
         } catch (AuthenticationException authException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
         } catch (Exception e) {
@@ -84,11 +86,23 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = authentication.getName();
+        UserDTO authenticatUserDTO = userService.getUserByEmail(email);
+        return ResponseEntity.ok(authenticatUserDTO);
+    }
+
+    @PostMapping("/sign-out")
+    public ResponseEntity<?> signOut() {
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path("/")
                 .sameSite("Strict")
                 .maxAge(0) // Expire immediately

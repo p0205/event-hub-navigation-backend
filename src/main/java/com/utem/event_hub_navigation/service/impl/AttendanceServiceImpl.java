@@ -1,8 +1,16 @@
 package com.utem.event_hub_navigation.service.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,7 +50,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     private EventRepo eventRepo;
 
     private UserRepo userRepo;
-
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
 
     @Autowired
     public AttendanceServiceImpl(SessionRepo sessionRepo, QRCodeUtil qrCodeGenerator, AttendanceRepo attendanceRepo,
@@ -61,7 +69,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         Session session = sessionRepo.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found with ID: " + sessionId));
 
-        // If QR code already exists, reuse 
+        // If QR code already exists, reuse
         if (session.getQrCodeImage() != null) {
             return session.getQrCodeImage();
         }
@@ -133,11 +141,66 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public Page<Attendee> getCheckInParticipants(Integer sessionId,Pageable pageable) {
-        Page<Attendee> attendees = attendanceRepo.findCheckInParticipantsBySession(sessionId,pageable);
-        
+    public Page<Attendee> getCheckInParticipants(Integer sessionId, Pageable pageable) {
+        Page<Attendee> attendees = attendanceRepo.findCheckInParticipantsBySession(sessionId, pageable);
+
         return attendees;
     }
+
+   
+
+    /**
+     * Exports attendance data for a given event and session as an XLSX byte array.
+     * In a real application, this would fetch data from a database.
+     *
+     * @param eventId The ID of the event.
+     * @param sessionId The ID of the session.
+     * @return A byte array containing the XLSX data.
+     * @throws IOException If an I/O error occurs during XLSX generation.
+     */
+    public byte[] exportAttendanceXLSX(Integer sessionId) throws IOException {
+        List<Attendee> attendanceRecords = attendanceRepo.findCheckInParticipantsBySession(sessionId);
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Attendance");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"No", "Name", "Email", "Contact Number", "Faculty", "Course", "Year", "Check In Time"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Populate data rows
+            int rowNum = 1;
+            for (Attendee record : attendanceRecords) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(rowNum-1);
+                row.createCell(1).setCellValue(record.getName());
+                row.createCell(2).setCellValue(record.getEmail());
+                row.createCell(3).setCellValue(record.getPhoneNo());
+                row.createCell(4).setCellValue(record.getFaculty());
+                row.createCell(5).setCellValue(record.getCourse());
+                row.createCell(6).setCellValue(record.getYear());
+                row.createCell(7).setCellValue(record.getCheckinDateTime().format(DATE_TIME_FORMATTER));
+            }
+
+            // Auto-size columns for better readability (optional, can be performance intensive for very large datasets)
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(baos);
+            return baos.toByteArray();
+
+        }
+    }
+
+ 
+
 }
 
 // public String markAttendance(Integer userId, String qrData) {

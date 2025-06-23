@@ -26,7 +26,7 @@ public class DocumentController {
     @Autowired
     private DocumentService documentService;
 
-    @PostMapping("/uploadFile")
+    @PostMapping("/api/uploadFile")
     public DocumentResponse uploadFile(@RequestParam("file") MultipartFile file) {
         Document fileName = documentService.storeFile(file);
 

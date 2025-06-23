@@ -1,5 +1,6 @@
 package com.utem.event_hub_navigation.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
@@ -27,11 +28,13 @@ public class Venue {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+     @JsonIgnore
     @JoinColumn(name = "node_id",nullable = false)
     private Node node;
 
 
     private String name;
+    private String fullName;
     private Integer capacity;
 
 

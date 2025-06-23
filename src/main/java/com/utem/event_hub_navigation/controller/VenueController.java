@@ -17,7 +17,7 @@ import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.service.VenueService;
 
 @RestController
-@RequestMapping("/venue")
+@RequestMapping("/api/venue")
 public class VenueController {
 
     private final VenueService venueService;

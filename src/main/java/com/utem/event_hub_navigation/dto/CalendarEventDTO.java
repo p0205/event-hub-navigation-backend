@@ -9,6 +9,8 @@ public interface CalendarEventDTO {
     Integer getSessionId();
     String getSessionName();
     LocalDateTime getStartDateTime();
+    String getDescription();
+    String getEventType();
     LocalDateTime getEndDateTime();
     String getVenueNames(); // Comma-separated string
 }

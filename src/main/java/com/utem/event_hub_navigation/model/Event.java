@@ -52,6 +52,10 @@ public class Event {
     @Column(nullable = true)
     private EventStatus status ;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private EventType type ;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id",nullable = false)
     private User organizer;

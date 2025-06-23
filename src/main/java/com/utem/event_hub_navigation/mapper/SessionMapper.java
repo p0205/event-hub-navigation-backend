@@ -27,6 +27,9 @@ public interface SessionMapper {
     @Mapping(source = "sessionVenues", target = "venues")
     SessionDTO toDto(Session session);
 
+    @Mapping(source = "sessionVenues", target = "venues")
+    List<SessionDTO> toDto(List<Session> session);
+
     default List<Venue> mapSessionVenuesToVenues(List<SessionVenue> sessionVenues) {
         if (sessionVenues == null || sessionVenues.isEmpty()) {
             // Return null or an empty list based on your API contract preference

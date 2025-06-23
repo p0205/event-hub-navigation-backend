@@ -1,5 +1,7 @@
 package com.utem.event_hub_navigation.controller;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +35,7 @@ import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.service.EventService;
 
 @RestController
-@RequestMapping("/events")
+@RequestMapping("/api/events")
 public class EventController {
 
     private final EventService eventService;
@@ -55,6 +58,7 @@ public class EventController {
     public ResponseEntity<EventDTO> createEvent(
             @RequestPart("name") String name,
             @RequestPart("description") String description,
+            @RequestPart("type") String type,
             @RequestPart("organizerId") String organizerIdString,
             @RequestPart("participantsNo") String participantsNoString,
             @RequestPart("sessions") String sessionsJson,
@@ -62,10 +66,11 @@ public class EventController {
             @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
                 name, description, organizerIdString,
-                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument);
-
+                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument,type);
+                // dto.setType(type);
+System.out.println("create new event");
         EventDTO savedEvent = eventService.createEvent(dto);
-
+        System.out.println("create new event end");
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
 
@@ -109,7 +114,7 @@ public class EventController {
         // loaded)
         EventDTO event = eventService.getEventDTOById(id);
         if (event != null)
-            return ResponseEntity.ok(eventService.getEventDTOById(id));
+            return ResponseEntity.ok(event);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
@@ -204,6 +209,46 @@ public class EventController {
         return ResponseEntity.ok(participantList);
     }
 
+
+     @GetMapping("/{eventId}/participants/export")
+    public ResponseEntity<byte[]> exportParticipants( // Changed method name
+    
+            @PathVariable Integer eventId) { // sessionName is optional for filename
+
+        try {
+            // Generate the XLSX data using the service
+            byte[] xlsxBytes = eventService.exportParticipants(eventId); // Call new XLSX service method
+
+            // Determine the filename based on sessionName or default
+            String filename;
+           
+                filename = String.format("participants-event-%d.xlsx", eventId); // Changed extension to .xlsx
+            
+
+            // Set HTTP Headers for file download
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")); // Changed Content-Type for XLSX
+            // Force download and specify filename
+            headers.setContentDispositionFormData("attachment", filename);
+            // Set content length for better download progress indication
+            headers.setContentLength(xlsxBytes.length);
+
+            // Return the XLSX bytes with appropriate headers
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(xlsxBytes);
+
+        } catch (IOException e) {
+            // Log the error and return an internal server error status
+            System.err.println("Error generating XLSX for event " + eventId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        } catch (Exception e) {
+            // Catch any other unexpected errors
+            System.err.println("An unexpected error occurred during XLSX export for event " + eventId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     // Add participants to event
     @PostMapping("/{eventId}/participants")
     public ResponseEntity<List<UserDTO>> importParticipants(@PathVariable("eventId") Integer eventId,
@@ -251,7 +296,24 @@ public class EventController {
         }
     }
 
+
     // Get calender events to be displayed
+    @GetMapping("/calendar/all-events")
+    public ResponseEntity<?> getAllEventsByMonth( @RequestParam("startDateTime") LocalDateTime startDateTime,
+    @RequestParam("endDateTime") LocalDateTime endDateTime) {
+        try {
+            System.out.println("Start Date: " + startDateTime);
+            System.out.println("End Date: " + endDateTime);
+            
+            return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime,endDateTime));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
         try {
@@ -262,5 +324,55 @@ public class EventController {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
+
+    //Get Participants' Upcoming Events
+    @GetMapping("/participant/upcoming-events")
+    public ResponseEntity<?> getParticipantUpcomingEvents(@RequestParam("userId") Integer userId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsUpcomingEvents(userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+    //Get Participants' Past Events
+    @GetMapping("/participant/past-events")
+    public ResponseEntity<?> getParticipantPastEvents(@RequestParam("userId") Integer userId) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsPastEvents(userId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+    //Get Participants' Past Events
+    @GetMapping("/participant/calendar-events")
+    public ResponseEntity<?> getParticipantEventsByMonth(
+            @RequestParam("userId") Integer userId,
+            @RequestParam("startDateTime") LocalDateTime startDateTime,
+            @RequestParam("endDateTime") LocalDateTime endDateTime) {
+        try {
+            return ResponseEntity.ok(eventService.getParticipantsEventsByMonth(userId, startDateTime, endDateTime));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    //Get Event Details
+    @GetMapping("/{eventId}/details")
+    public ResponseEntity<?> getEventDetails(@PathVariable("eventId") Integer eventId) {
+        try {
+            return ResponseEntity.ok(eventService.getEventDetails(eventId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+    
 
 }

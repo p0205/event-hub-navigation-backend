@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.utem.event_hub_navigation.model.Document;
 import com.utem.event_hub_navigation.model.EventStatus;
+import com.utem.event_hub_navigation.model.EventType;
+
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -25,11 +27,14 @@ public class EventDTO {
     private String description;
 
     private Integer organizerId;
+    private String organizerName;
 
 
     @Enumerated(EnumType.STRING)
     private EventStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private EventType type ;
 
     private Document supportingDocument; // optional
 

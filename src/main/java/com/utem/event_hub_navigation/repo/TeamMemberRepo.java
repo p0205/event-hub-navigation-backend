@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
@@ -61,4 +63,12 @@ public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey>
             @Param("eventId") Integer eventId,
             @Param("query") String query,
             @Param("roleId") Integer roleId);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+            DELETE FROM team_member
+            WHERE event_id = :eventId AND user_id = :userId
+            """, nativeQuery = true)
+    void deleteAllByEventAndUser(@Param("eventId") Integer eventId, @Param("userId") Integer userId);
 }

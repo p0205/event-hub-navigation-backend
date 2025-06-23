@@ -1,11 +1,14 @@
 package com.utem.event_hub_navigation.service.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,6 +19,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +37,10 @@ import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetails;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetailsSessionDTO;
+import com.utem.event_hub_navigation.dto.ParticipantEventDetailsVenueDTO;
+import com.utem.event_hub_navigation.dto.ParticipantEventOverviewResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
@@ -44,6 +52,7 @@ import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventBudget;
 import com.utem.event_hub_navigation.model.EventBudgetKey;
 import com.utem.event_hub_navigation.model.EventStatus;
+import com.utem.event_hub_navigation.model.EventType;
 import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.SessionVenue;
 import com.utem.event_hub_navigation.model.SessionVenueKey;
@@ -100,6 +109,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventDTO createEvent(EventDTO dto) {
+
 
         Event event = eventMapper.toEntity(dto);
         // 1. Set back-references
@@ -182,7 +192,8 @@ public class EventServiceImpl implements EventService {
             String participantsNoString,
             String sessionsJson,
             String eventBudgetsJson,
-            MultipartFile supportingDocument) {
+            MultipartFile supportingDocument,
+            String typeString) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
@@ -195,8 +206,7 @@ public class EventServiceImpl implements EventService {
 
         List<SessionDTO> venues = JsonParserUtil.parseJson(sessionsJson, new TypeReference<>() {
         });
-        System.out.println(sessionsJson.toString());
-        System.out.println(venues.toString());
+     
         List<EventBudgetDTO> budgets = JsonParserUtil.parseJson(eventBudgetsJson, new TypeReference<>() {
         });
 
@@ -207,6 +217,15 @@ public class EventServiceImpl implements EventService {
         dto.setParticipantsNo(participantsNo);
         dto.setSessions(venues);
         dto.setEventBudgets(budgets);
+
+        EventType type;
+        try {
+            type = EventType.valueOf(typeString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid event type: " + typeString +
+                    ". Valid types are: " + Arrays.toString(EventType.values()));
+        }
+        dto.setType(type);
 
         if (supportingDocument != null && !supportingDocument.isEmpty()) {
             try {
@@ -534,24 +553,9 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public boolean removeParticipant(Integer eventId, Integer participantId) {
-        Event event = eventRepo.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        User participant = userRepo.findById(participantId)
-                .orElseThrow(() -> new RuntimeException("Participant not found"));
-
-        Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
-        registrationRepo.delete(registration);
+        registrationRepo.deleteByUserIdUserId(eventId, participantId);
         return true;
-    }
-
-    @Override
-    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception {
-        try {
-            return eventRepo.findCalendarEntriesByOrganizerId(userID);
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
     }
 
     @Override
@@ -565,5 +569,198 @@ public class EventServiceImpl implements EventService {
         eventRepo.save(event);
     }
 
+    // MOBILE APP APIs
+    // Get calendar event data
+    @Override
+    public List<CalendarEventDTO> getAllCalendarEventByMonth(LocalDateTime startDateTime,
+            LocalDateTime endDateTime) throws Exception {
+        try {
+            List<CalendarEventDTO> eventList = eventRepo.fetchAllCalendarEventByMonth(startDateTime, endDateTime);
+         
+            return eventList;
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
 
-}
+    @Override
+    public List<CalendarEventDTO> getCalendarEvent(Integer userID) throws Exception {
+        try {
+            return eventRepo.findCalendarEntriesByOrganizerId(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    @Override
+    public List<CalendarEventDTO> getParticipantsEventsByMonth(Integer userID,
+            LocalDateTime startDateTime,
+            LocalDateTime endDateTime) throws Exception {
+        try {
+
+            List<CalendarEventDTO> response = registrationRepo.fetchParticipantEventsByDateRange(userID,
+                    startDateTime, endDateTime);
+           
+            return response;
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    // Get participant's upcoming events
+    @Override
+    public List<ParticipantEventOverviewResponse> getParticipantsUpcomingEvents(Integer userID) throws Exception {
+        try {
+            return registrationRepo.fetchParticipantUpcomingEvents(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    // Get participant's past events
+    @Override
+    public List<ParticipantEventOverviewResponse> getParticipantsPastEvents(Integer userID) throws Exception {
+        try {
+            return registrationRepo.fetchParticipantPastEvents(userID);
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    // @Override
+    // public List<ParticipantEventOverviewResponse>
+    // getParticipantsEventsByMonth(Integer userID, LocalDateTime startDateTime,
+    // LocalDateTime endDateTime) throws Exception {
+    // try {
+
+    // List<ParticipantEventOverviewResponse> response =
+    // registrationRepo.fetchParticipantEventsByDateRange(userID, startDateTime,
+    // endDateTime);
+    // System.out.println(response.size());
+    // return response;
+    // } catch (Exception e) {
+    // throw new Exception(e.getMessage());
+    // }
+    // }
+
+    @Override
+    public ParticipantEventDetails getEventDetails(Integer eventId) throws Exception {
+        try {
+            List<Object[]> rows = eventRepo.findEventDetailsById(eventId);
+            ParticipantEventDetails event = new ParticipantEventDetails();
+            Map<Integer, ParticipantEventDetailsSessionDTO> sessionMap = new HashMap<>();
+
+            for (Object[] row : rows) {
+                if (event.getId() == null) {
+                    event.setId((Integer) row[0]);
+                    event.setEventName((String) row[1]);
+                    event.setDescription((String) row[2]);
+
+                    java.sql.Date sqlDate = (java.sql.Date) row[3];
+                    event.setRegisterDate(sqlDate != null ? sqlDate.toLocalDate() : null);
+
+                    java.sql.Timestamp startTimestamp = (java.sql.Timestamp) row[4];
+                    event.setStartDateTime(startTimestamp != null ? startTimestamp.toLocalDateTime() : null);
+
+                    java.sql.Timestamp endTimestamp = (java.sql.Timestamp) row[5];
+                    event.setEndDateTime(endTimestamp != null ? endTimestamp.toLocalDateTime() : null);
+
+                    event.setOrganizerName((String) row[6]);
+                    event.setPicName((String) row[7]);
+                    event.setPicContact((String) row[8]);
+                    event.setPicEmail((String) row[9]);
+                }
+
+                Integer sessionId = (Integer) row[10];
+                if (sessionId != null) {
+                    ParticipantEventDetailsSessionDTO session = sessionMap.get(sessionId);
+                    if (session == null) {
+                        session = new ParticipantEventDetailsSessionDTO();
+                        session.setId(sessionId);
+                        session.setSessionName((String) row[11]);
+
+                        java.sql.Timestamp sessionStartTimestamp = (java.sql.Timestamp) row[12];
+                        session.setStartDateTime(
+                                sessionStartTimestamp != null ? sessionStartTimestamp.toLocalDateTime() : null);
+
+                        java.sql.Timestamp sessionEndTimestamp = (java.sql.Timestamp) row[13];
+                        session.setEndDateTime(
+                                sessionEndTimestamp != null ? sessionEndTimestamp.toLocalDateTime() : null);
+
+                        sessionMap.put(sessionId, session);
+                    }
+
+                    Integer venueId = (Integer) row[14];
+                    if (venueId != null) {
+                        ParticipantEventDetailsVenueDTO venue = new ParticipantEventDetailsVenueDTO();
+                        venue.setId(venueId);
+                        venue.setName((String) row[15]);
+
+                        // Check if this venue is already added
+                        boolean venueExists = session.getVenues().stream()
+                                .anyMatch(v -> v.getId().equals(venueId));
+                        if (!venueExists) {
+                            session.getVenues().add(venue);
+                        }
+                    }
+                }
+            }
+
+            event.setSessions(new ArrayList<>(sessionMap.values()));
+            return event;
+
+        } catch (Exception e) {
+            throw new Exception("Error fetching event details: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public byte[] exportParticipants(Integer eventId) throws IOException {
+        List<Registration> registrations = registrationRepo.findByEvent_Id(eventId);
+
+        List<UserDTO> participants = registrations.stream()
+                .map(registration -> userMapper.toUserDTO(registration.getParticipant()))
+                .collect(Collectors.toList());
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Attendance");
+
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = { "No", "Name", "Email", "Contact Number", "Gender","Faculty", "Course", "Year",
+                    };
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            // Populate data rows
+            int rowNum = 1;
+            for (UserDTO participant : participants) {
+                Row row = sheet.createRow(rowNum++);
+             
+                row.createCell(0).setCellValue(rowNum-1);
+                row.createCell(1).setCellValue(participant.getName());
+                row.createCell(2).setCellValue(participant.getEmail());
+                row.createCell(3).setCellValue(participant.getPhoneNo());
+                row.createCell(4).setCellValue(String.valueOf(participant.getGender()));
+                row.createCell(5).setCellValue(participant.getFaculty());
+                row.createCell(6).setCellValue(participant.getCourse());
+                row.createCell(7).setCellValue(participant.getYear());
+      
+            }
+
+    // Auto-size columns for better readability (optional, can be performance
+    // intensive for very large datasets)
+    for(
+
+    int i = 0;i<headers.length;i++)
+    {
+        sheet.autoSizeColumn(i);
+    }
+
+    workbook.write(baos);return baos.toByteArray();
+
+}}}

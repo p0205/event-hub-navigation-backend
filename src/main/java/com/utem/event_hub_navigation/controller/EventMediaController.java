@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.utem.event_hub_navigation.service.impl.EventMediaService;
 
 @RestController
-@RequestMapping("/events/{eventId}/media")
+@RequestMapping("/api/events/{eventId}/media")
 public class EventMediaController {
 
     @Autowired

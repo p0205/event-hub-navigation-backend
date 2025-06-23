@@ -3,11 +3,17 @@ package com.utem.event_hub_navigation.service.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,8 +31,11 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
+import com.utem.event_hub_navigation.ai.GeminiApi;
+import com.utem.event_hub_navigation.dto.ArticleManualInputsDto;
 import com.utem.event_hub_navigation.dto.AttendanceReportOverview;
 import com.utem.event_hub_navigation.dto.BudgetReportOverview;
+import com.utem.event_hub_navigation.dto.EventArticleDTO;
 import com.utem.event_hub_navigation.dto.EventAttendanceReportDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventBudgetReportDTO;
@@ -34,10 +43,14 @@ import com.utem.event_hub_navigation.dto.EventFeedbackReportDTO;
 import com.utem.event_hub_navigation.dto.EventReportOverviewDTO;
 import com.utem.event_hub_navigation.dto.FeedbackReportOveriew;
 import com.utem.event_hub_navigation.dto.SessionAttendanceDTO;
+import com.utem.event_hub_navigation.dto.SessionDTO;
+import com.utem.event_hub_navigation.mapper.SessionMapper;
 import com.utem.event_hub_navigation.model.Event;
+import com.utem.event_hub_navigation.model.EventMedia;
 import com.utem.event_hub_navigation.model.EventReport;
 import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.model.Session;
+import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.repo.AttendanceRepo;
 import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.EventReportRepo;
@@ -81,6 +94,8 @@ public class EventReportServiceImpl implements EventReportService {
 
         private SessionRepo sessionRepo;
 
+        private SessionMapper sessionMapper;
+
         private SupabaseStorageService supabaseStorageService;
 
         private EventReportRepo eventReportRepo;
@@ -89,20 +104,24 @@ public class EventReportServiceImpl implements EventReportService {
 
         private EventBudgetService eventBudgetService;
 
+        private GeminiApi geminiApi;
+
         @Autowired
         public EventReportServiceImpl(EventRepo eventRepository, RegistrationRepo registrationRepository,
-                        AttendanceRepo attendanceRepository, SessionRepo sessionRepository,
+                        AttendanceRepo attendanceRepository, SessionRepo sessionRepository, SessionMapper sessionMapper,
                         SupabaseStorageService supabaseStorageService, EventReportRepo eventReportRepo,
                         FeedbackRepo feedbackRepo,
-                        EventBudgetService eventBudgetService) {
+                        EventBudgetService eventBudgetService, GeminiApi geminiApi) {
                 this.eventRepo = eventRepository;
                 this.registrationRepo = registrationRepository;
                 this.sessionRepo = sessionRepository;
+                this.sessionMapper = sessionMapper;
                 this.attendanceRepo = attendanceRepository;
                 this.supabaseStorageService = supabaseStorageService;
                 this.eventReportRepo = eventReportRepo;
                 this.feedbackRepo = feedbackRepo;
                 this.eventBudgetService = eventBudgetService;
+                this.geminiApi = geminiApi;
         }
 
         @Override
@@ -994,5 +1013,105 @@ public class EventReportServiceImpl implements EventReportService {
                 }
                 return ratingsDistribution;
         }
+
+        @Override
+        public String generateEventArticle(
+                Integer eventId,
+                String organizingBody,
+                String creditIndividuals,
+                String eventObjectives,
+                String activitiesConducted,
+                String targetAudience,
+                String perceivedImpact,
+                String acknowledgements,
+                String appreciationMessage,
+                String language
+        ) {
+                Event event = eventRepo.findById(eventId)
+                                .orElseThrow(() -> new RuntimeException("Event not found with ID: " + eventId));
+
+                Long totalParticipants = registrationRepo.countByEvent(event);
+               
+                // Session and venue info
+                List<Session> sessions = sessionRepo.findByEvent(event);
+                List<SessionDTO> sessionsDTO = sessionMapper.toDto(sessions).stream()
+                                .peek(sessionDTO -> sessionDTO.setQrCodeImage(null))
+                                .collect(Collectors.toList());
+                List<String> sessionVenueSummaries = new ArrayList<>();
+                for (Session session : sessions) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(session.getSessionName());
+                    if (session.getSessionVenues() != null && !session.getSessionVenues().isEmpty()) {
+                        sb.append(" (Venue: ");
+                        sb.append(session.getSessionVenues().stream()
+                            .map(sv -> sv.getVenue().getName())
+                            .reduce((a, b) -> a + ", " + b).orElse("")
+                        );
+                        sb.append(")");
+                    }
+                    sessionVenueSummaries.add(sb.toString());
+                }
+               
+                // Media URLs
+                // (Assume eventMediaRepo is available)
+                // List<String> mediaUrls = eventMediaRepo.findByEvent(event).stream().map(EventMedia::getFileUrl).collect(Collectors.toList());
+                // dto.setMediaUrls(mediaUrls);
+                // Committee names
+                // (Assume teamMemberRepo is available)
+                // List<String> committeeNames = teamMemberRepo.findByEvent(event).stream().map(tm -> tm.getUser().getName()).collect(Collectors.toList());
+                // dto.setCommitteeNames(committeeNames);
+
+                ArticleManualInputsDto manualInputs = ArticleManualInputsDto.builder()
+                        .organizingBody(organizingBody)
+                        .creditIndividuals(creditIndividuals)
+                        .eventObjectives(eventObjectives)
+                        .activitiesConducted(activitiesConducted)
+                        .targetAudience(targetAudience)
+                        .perceivedImpact(perceivedImpact)
+                        .acknowledgements(acknowledgements)
+                        .appreciationMessage(appreciationMessage)
+                        .language(language) // Set the language for the article
+                        .build();
+    
+
+                        EventArticleDTO dto = EventArticleDTO.builder()
+                                .eventName(event.getName())
+                                .eventType(event.getType() != null ? event.getType().toString() : null)
+                                .startDateTime(event.getStartDateTime())
+                                .endDateTime(event.getEndDateTime())
+                                .participantsNo(totalParticipants)
+                                .manualInputs(manualInputs)
+                                // .mediaUrls(mediaUrls)
+                                // .committeeNames(committeeNames)
+                                .sessionVenueSummaries(sessionVenueSummaries)
+                                .sessions(sessionsDTO)       
+                                .build();
+                          // Set database-derived fields
+                
+                          System.out.println("Generating article for event: " + dto.getEventName());
+                          System.out.println("Event Type: " + dto.getEventType());
+                          System.out.println("Start Date: " + dto.getStartDateTime());
+                          System.out.println("End Date: " + dto.getEndDateTime());      
+                          System.out.println("Participants No: " + dto.getParticipantsNo());
+                          System.out.println("Session Venue Summaries: " + dto.getSessionVenueSummaries());
+                          System.out.println("sessions: " + dto.getSessions());
+                          System.out.println("Manual Inputs: " + dto.getManualInputs());
+
+
+                // Use Gemini to generate the main article content
+                String aiGeneratedContent = geminiApi.generatePostEventArticle(dto);
+                // dto.setMainArticleContent(aiGeneratedContent);
+
+                return aiGeneratedContent;
+        }
+
+        // // The original method now delegates to the new one with nulls/defaults for backward compatibility
+        // @Override
+        // public EventArticleDTO generateEventArticle(Integer eventId) {
+        //         return generateEventArticle(
+        //                 eventId,
+        //                 null, null, null, null, null, null, null, null
+        //         );
+        // }
 
 }

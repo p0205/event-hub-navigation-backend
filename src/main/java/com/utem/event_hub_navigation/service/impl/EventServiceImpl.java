@@ -110,7 +110,7 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDTO createEvent(EventDTO dto) {
 
-        System.out.println(dto.getType());
+
         Event event = eventMapper.toEntity(dto);
         // 1. Set back-references
         List<Session> sessions = new ArrayList<>();
@@ -206,8 +206,7 @@ public class EventServiceImpl implements EventService {
 
         List<SessionDTO> venues = JsonParserUtil.parseJson(sessionsJson, new TypeReference<>() {
         });
-        System.out.println(sessionsJson.toString());
-        System.out.println(venues.toString());
+     
         List<EventBudgetDTO> budgets = JsonParserUtil.parseJson(eventBudgetsJson, new TypeReference<>() {
         });
 

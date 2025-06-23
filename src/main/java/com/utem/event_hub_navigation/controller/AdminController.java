@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.itextpdf.text.DocumentException;
 import com.utem.event_hub_navigation.dto.VenueUtilizationReportRequest;
 import com.utem.event_hub_navigation.dto.DashboardDataDTO;
-import com.utem.event_hub_navigation.dto.FilterDateRangeDTO;
 import com.utem.event_hub_navigation.service.AdminService;
 import com.utem.event_hub_navigation.service.impl.AdminReportServiceImpl;
 

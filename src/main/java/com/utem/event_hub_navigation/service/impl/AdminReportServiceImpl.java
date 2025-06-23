@@ -5,11 +5,15 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,16 +33,23 @@ import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
+import com.utem.event_hub_navigation.dto.EventArticleDTO;
 import com.utem.event_hub_navigation.dto.EventTypePerformanceData;
+import com.utem.event_hub_navigation.model.Event;
+import com.utem.event_hub_navigation.model.EventMedia;
+import com.utem.event_hub_navigation.model.Session;
 import com.utem.event_hub_navigation.model.VenueUtilizationData;
 import com.utem.event_hub_navigation.repo.VenueRepo;
+import com.utem.event_hub_navigation.service.AdminReportService;
 import com.utem.event_hub_navigation.repo.EventRepo;
+import com.utem.event_hub_navigation.repo.FeedbackRepo;
+import com.utem.event_hub_navigation.repo.SessionRepo;
 import com.utem.event_hub_navigation.utils.ReportGeneratorUtils;
 import java.util.LinkedHashMap;
 import org.jfree.chart.plot.PlotOrientation;
 
 @Service
-public class AdminReportServiceImpl {
+public class AdminReportServiceImpl  implements AdminReportService {
         // --- Static Font Definitions ---
         // --- Static Font Definitions (iText 5 compatible - as provided by you) ---
         private static final Font TITLE_FONT = new Font(Font.FontFamily.HELVETICA, 22, Font.BOLD);
@@ -69,6 +80,7 @@ public class AdminReportServiceImpl {
         @Autowired
         private EventRepo eventRepo;
 
+
         // --- Mock Data Class (for demonstration purposes) ---
 
         /**
@@ -81,6 +93,7 @@ public class AdminReportServiceImpl {
          * @throws IOException       If there's an error reading image data (for mock
          *                           charts).
          */
+        @Override
         public byte[] generateVenueUtilizationReport(LocalDateTime startDateTime, LocalDateTime endDateTime,
                         List<Integer> venueIds) throws DocumentException, IOException {
                 Document document = new Document(PageSize.A4.rotate(), 50, 50, 50, 50);
@@ -576,8 +589,6 @@ public class AdminReportServiceImpl {
                                 .mapToDouble(EventTypePerformanceData::getAvgAttendanceRate)
                                 .average().orElse(0.0);
 
-              
-
                 // Find highest/lowest attended by average attendance rate, handling nulls
                 EventTypePerformanceData highestAttended = allEventTypesData.stream()
                                 .filter(d -> d.getAvgAttendanceRate() != null)
@@ -597,7 +608,6 @@ public class AdminReportServiceImpl {
                 ReportGeneratorUtils.addKeyValueLine(document, "Overall Avg. Actual Attendance Rate",
                                 String.format("%.2f%%", overallAvgAttendanceRate), 10);
 
-            
                 ReportGeneratorUtils.addKeyValueLine(document, "Highest Attended Event Type",
                                 String.valueOf(highestAttended.getEventType()) + " (Avg. Attendance: "
                                                 + String.format("%.2f%%", highestAttended.getAvgFillRate()) + ")",
@@ -831,4 +841,6 @@ public class AdminReportServiceImpl {
                 document.add(formulasList);
 
         }
+
+      
 }

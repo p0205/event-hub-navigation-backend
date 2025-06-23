@@ -1,6 +1,7 @@
 package com.utem.event_hub_navigation.repo;
 
 import java.util.List;
+import java.util.OptionalDouble;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -76,4 +77,10 @@ public interface FeedbackRepo extends JpaRepository<Feedback, Integer> {
             ORDER BY f.submittedAt DESC, f.id DESC
             """)
     List<Object[]> findCommentsByEventId(@Param("eventId") Integer eventId);
+
+     @Query("SELECT AVG(f.rating) FROM Feedback f JOIN f.registration r WHERE r.event.id = :eventId")
+    Double findAverageRatingByEventId(@Param("eventId") Integer eventId);
+
+    @Query("SELECT COUNT(f) FROM Feedback f JOIN f.registration r WHERE r.event.id = :eventId")
+    long countByEventId(@Param("eventId") Integer eventId);
 }

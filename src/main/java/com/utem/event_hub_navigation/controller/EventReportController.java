@@ -7,10 +7,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utem.event_hub_navigation.dto.EventArticleDTO;
+import com.utem.event_hub_navigation.dto.ArticleManualInputsDto;
 import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.impl.EventReportServiceImpl;
 
@@ -93,5 +97,40 @@ public class EventReportController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
 
+    }
+
+    // @GetMapping("/article")
+    // public ResponseEntity<String> getEventArticle(@PathVariable Integer eventId) {
+    //     try {
+    //         EventArticleDTO article = eventReportService.generateEventArticle(eventId);
+    //         return ResponseEntity.ok(article.getMainArticleContent());
+    //     } catch (RuntimeException e) {
+    //         System.out.println(e.toString());
+    //         return ResponseEntity.notFound().build(); // Or handle specific exceptions with @ExceptionHandler
+    //     }
+    // }
+
+    @PostMapping("/article")
+    public ResponseEntity<String> generateEventArticleWithManualInputs(
+            @PathVariable Integer eventId,
+            @RequestBody ArticleManualInputsDto inputsDto) {
+        try {
+            String article = eventReportService.generateEventArticle(
+                eventId,
+                inputsDto.getOrganizingBody(),
+                inputsDto.getCreditIndividuals(),
+                inputsDto.getEventObjectives(),
+                inputsDto.getActivitiesConducted(),
+                inputsDto.getTargetAudience(),
+                inputsDto.getPerceivedImpact(),
+                inputsDto.getAcknowledgements(),
+                inputsDto.getAppreciationMessage(),
+                inputsDto.getLanguage()
+            );
+            return ResponseEntity.ok(article);
+        } catch (RuntimeException e) {
+            System.err.println("Error generating article for event " + eventId + ": " + e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 }

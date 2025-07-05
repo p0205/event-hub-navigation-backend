@@ -49,10 +49,13 @@ public class QRCodeUtil {
         // 4) Build payload object
         QRPayload p = new QRPayload(eventId, sessionId, expires, sig);
 
-        // 5) Serialize to JSON and Base64-encode
+        // 5. Serialize to JSON and Base64 encode
         String json = mapper.writeValueAsString(p);
-        return Base64.getUrlEncoder().withoutPadding()
+        String encoded = Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(json.getBytes(StandardCharsets.UTF_8));
+
+        // 6. Return full URL
+        return "http://192.168.3.109:3000/public/check-in?q=" + encoded;
     }
 
     public byte[] generateQRCodeImage(String payload, int width, int height) throws Exception {
@@ -86,7 +89,8 @@ public class QRCodeUtil {
         }
 
         // Example: Save check-in record to DB
-        // attendanceRepository.save(new AttendanceRecord(participantId, payload.sessionId, LocalDateTime.now()));
+        // attendanceRepository.save(new AttendanceRecord(participantId,
+        // payload.sessionId, LocalDateTime.now()));
 
         return payload;
     }

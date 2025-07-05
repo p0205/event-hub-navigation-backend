@@ -5,7 +5,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import com.utem.event_hub_navigation.EventCompletedReportEvent;
-import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.EventReportService;
 
 @Component
@@ -22,7 +21,8 @@ public class ReportGenerationListener {
     public void handleEventCompleted(EventCompletedReportEvent event) {
         System.out.println("Received event completion for event ID: " + event.getEventId() + ". Generating report...");
         try {
-            reportService.storeReport(event.getEventId(),ReportType.ATTENDANCE);
+            reportService.storeReport(event.getEventId());
+
             System.out.println("Report generated successfully for event ID: " + event.getEventId());
         }catch (Exception e) {
             System.err.println("Error generating report for event ID: " + event.getEventId() + " - " + e.getMessage());

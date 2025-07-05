@@ -67,7 +67,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean register(String email, String phoneNo, String rawPassword) {
         try {
+            
             User user = userMapper.toUser(utemStudentRepo.findByEmail(email));
+            if(user == null) {
+                user = userMapper.toUser(utemStaffRepo.findByEmail(email));
+                
+            }
+            user.setRole(email.contains("student") ? "PARTICIPANT" : "EVENT ORGANIZER");
             String hashPassword = passwordEncoder.encode(rawPassword);
             user.setCreatedAt(LocalDate.now());
             user.setPasswordHash(hashPassword);
@@ -79,7 +85,7 @@ public class UserServiceImpl implements UserService {
             userRepo.save(user);
             return true;
         } catch (Exception e) {
-           
+           System.out.println(e.toString());
             return false;
         }
     }

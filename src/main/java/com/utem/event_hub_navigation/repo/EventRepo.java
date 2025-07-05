@@ -101,8 +101,8 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                     s.start_date_time AS startDateTime,
                     s.end_date_time AS endDateTime,
                     COALESCE(GROUP_CONCAT(DISTINCT v.name SEPARATOR ', '), '') AS venueNames
-                FROM registration r
-                JOIN event e ON r.event_id = e.id
+            
+                FROM event e
                 JOIN session s ON s.event_id = e.id
                 LEFT JOIN session_venue sv ON sv.session_id = s.id
                 LEFT JOIN venue v ON v.id = sv.venue_id
@@ -168,7 +168,25 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
     @Param("endDateTime") LocalDateTime endDateTime);
 
     @Query(
-        value = "SELECT " +
+        value = "WITH SessionAttendanceRates AS (" +
+                "    SELECT " +
+                "        e.id AS eventId, " +
+                "        e.type AS eventType, " +
+                "        s.id AS sessionId, " +
+                "        COALESCE(" +
+                "            CAST(COUNT(a.registration_id) AS DECIMAL(10, 2)) * 100.0 / " +
+                "            NULLIF((SELECT COUNT(DISTINCT r.id) FROM registration r WHERE r.event_id = e.id), 0), " +
+                "        0.00) AS sessionAttendanceRate " +
+                "    FROM " +
+                "        session s " +
+                "    JOIN " +
+                "        event e ON s.event_id = e.id " +
+                "    LEFT JOIN " +
+                "        attendance a ON a.session_id = s.id " +
+                "    GROUP BY " +
+                "        e.id, e.type, s.id, s.session_name " +
+                ") " +
+                "SELECT " +
                 "  e.type as eventType, " +
                 "  COUNT(e.id) as eventsHeld, " +
                 "  COALESCE(" +
@@ -185,12 +203,9 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                 "    AVG(CASE WHEN e.participants_no > 0 THEN " +
                 "      (SELECT COUNT(r3.id) FROM registration r3 WHERE r3.event_id = e.id) * 100.0 / e.participants_no " +
                 "      ELSE NULL END), 0) as avgFillRate, " +
-                "  COALESCE(" +
-                "    AVG(CASE WHEN (SELECT COUNT(r4.id) FROM registration r4 WHERE r4.event_id = e.id) > 0 THEN " +
-                "      (SELECT COUNT(a.registration_id) FROM attendance a WHERE a.session_id IN (SELECT s.id FROM session s WHERE s.event_id = e.id)) * 100.0 / " +
-                "      (SELECT COUNT(r5.id) FROM registration r5 WHERE r5.event_id = e.id) " +
-                "      ELSE NULL END), NULL) as avgAttendanceRate " +
+                "  COALESCE(AVG(sar.sessionAttendanceRate), 0) as avgAttendanceRate " + 
                 "FROM event e " +
+                "LEFT JOIN SessionAttendanceRates sar ON e.id = sar.eventId " + 
                 "WHERE e.status = 'COMPLETED' " +
                 "  AND e.start_date_time >= :startDate " +
                 "  AND e.end_date_time <= :endDate " +

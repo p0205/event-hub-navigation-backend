@@ -59,6 +59,7 @@ public class AuthController {
         if (success) {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful"));
         } else {
+            
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Registration failed"));
         }
     }

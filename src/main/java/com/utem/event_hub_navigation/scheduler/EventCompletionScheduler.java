@@ -27,6 +27,7 @@ public class EventCompletionScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * ?") // Example: Runs every hour at the beginning of the hour
+    // @Scheduled(cron = "*/10 * * * * ?") // Example: Runs every hour at the beginning of the hour
     // Other options: fixedRate, fixedDelay
     @Transactional
     public void markEventsAsCompleted() {

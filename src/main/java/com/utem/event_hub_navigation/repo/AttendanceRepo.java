@@ -34,17 +34,7 @@ public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
                 JOIN registration r ON a.registration_id = r.id
                 JOIN users u ON r.user_id = u.id
                 WHERE a.session_id = :sessionId
-            """,
-            // countQuery is important for native queries to count total results across all
-            // pages
-            // without applying LIMIT/OFFSET
-            countQuery = """
-                         SELECT count(a.id)
-                         FROM attendance a
-                         JOIN registration r ON a.registration_id = r.id
-                         JOIN users u ON r.user_id = u.id
-                         WHERE a.session_id = :sessionId
-                    """, nativeQuery = true)
+            """, nativeQuery = true)
     Page<Attendee> findCheckInParticipantsBySession(@Param("sessionId") Integer sessionId, Pageable pageable);
 
     // Spring Data JPA will automatically apply LIMIT and OFFSET based on Pageable

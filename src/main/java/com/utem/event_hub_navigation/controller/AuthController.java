@@ -3,6 +3,7 @@ package com.utem.event_hub_navigation.controller;
 import java.time.Duration;
 import java.util.Map;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -20,8 +21,10 @@ import com.utem.event_hub_navigation.dto.EmailCheckResponse;
 import com.utem.event_hub_navigation.dto.SignInRequest;
 import com.utem.event_hub_navigation.dto.SignUpRequest;
 import com.utem.event_hub_navigation.dto.UserDTO;
+import com.utem.event_hub_navigation.event.onVerifyEmailEvent;
 import com.utem.event_hub_navigation.service.AuthService;
 import com.utem.event_hub_navigation.service.UserService;
+import com.utem.event_hub_navigation.service.VerificationCodeService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +37,22 @@ public class AuthController {
 
     private final AuthService authService;
 
+    private final VerificationCodeService emailVerificationCodeService;
+
+    
+
+    @GetMapping("/verify-code")
+    public ResponseEntity<?> verifyCode(@RequestParam String email, @RequestParam String code) {
+        boolean valid = emailVerificationCodeService.verifyCode(email, code);
+
+        if (valid) {
+            UserDTO userDTO = userService.getUserByEmail(email);
+            return ResponseEntity.ok(userDTO);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid or expired verification code.");
+        }
+    }
+
     @GetMapping("/check-email")
     public ResponseEntity<?> existInUTemDatabase(@RequestParam String email) {
         EmailCheckResponse response = userService.existInUTemDatabase(email);
@@ -45,7 +64,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Email not found in university database."));
             case VALID_EMAIL:
-                return ResponseEntity.ok(response.getUserDTO());
+                return ResponseEntity.ok(Map.of("message", "Email is valid and not registered."));
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "Unknown error"));
@@ -59,7 +78,7 @@ public class AuthController {
         if (success) {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Registration successful"));
         } else {
-            
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Registration failed"));
         }
     }
@@ -75,21 +94,20 @@ public class AuthController {
                     .sameSite("Strict")
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry
                     .build();
-                   
+
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(authenticatUserDTO);
         } catch (AuthenticationException authException) {
-          
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
         } catch (Exception e) {
-          
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.toString()));
         }
     }
 
-    
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {

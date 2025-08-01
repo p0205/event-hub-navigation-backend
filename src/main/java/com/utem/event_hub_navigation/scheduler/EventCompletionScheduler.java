@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.utem.event_hub_navigation.EventCompletedReportEvent;
+import com.utem.event_hub_navigation.event.EventCompletedReportEvent;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.service.EventService;

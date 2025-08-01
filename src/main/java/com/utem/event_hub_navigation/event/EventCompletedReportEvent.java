@@ -1,4 +1,4 @@
-package com.utem.event_hub_navigation;
+package com.utem.event_hub_navigation.event;
 
 import org.springframework.context.ApplicationEvent;
 

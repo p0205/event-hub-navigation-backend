@@ -4,7 +4,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.utem.event_hub_navigation.EventCompletedReportEvent;
+import com.utem.event_hub_navigation.event.EventCompletedReportEvent;
 import com.utem.event_hub_navigation.service.EventReportService;
 
 @Component

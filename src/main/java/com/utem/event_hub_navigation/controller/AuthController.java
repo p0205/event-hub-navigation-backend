@@ -46,8 +46,8 @@ public class AuthController {
         boolean valid = emailVerificationCodeService.verifyCode(email, code);
 
         if (valid) {
-            UserDTO userDTO = userService.getUserByEmail(email);
-            return ResponseEntity.ok(userDTO);
+            EmailCheckResponse response = userService.existInUTemDatabase(email);
+            return ResponseEntity.ok(response.getUserDTO());
         } else {
             return ResponseEntity.badRequest().body("Invalid or expired verification code.");
         }

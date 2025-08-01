@@ -39,7 +39,9 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
 
     @Override
     public boolean verifyCode(String email, String code) {
+        System.out.println("Verifying code for email: " + email + " with code: " + code);
         EmailVerificationCode record = emailVerificationCodeRepo.findByEmailAndCode(email, code);
+        System.out.println("Found record: " + record);
         if (record == null) return false;
 
 
@@ -49,6 +51,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
         }
 
         record.setVerified(true);
+        System.out.println("Setting record as verified: " + record.isVerified());
         emailVerificationCodeRepo.save(record);
         return true;
     }

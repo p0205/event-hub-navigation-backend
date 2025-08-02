@@ -22,7 +22,6 @@ import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.UTeMStaffRepo;
 import com.utem.event_hub_navigation.repo.UTeMStudentRepo;
 import com.utem.event_hub_navigation.repo.UserRepo;
-import com.utem.event_hub_navigation.service.EmailService;
 import com.utem.event_hub_navigation.service.UserService;
 
 @Service
@@ -33,17 +32,15 @@ public class UserServiceImpl implements UserService {
     private PasswordEncoder passwordEncoder;
     private UTeMStaffRepo utemStaffRepo;
     private UTeMStudentRepo utemStudentRepo;
-    private EmailService emailService;
 
     @Autowired
     public UserServiceImpl(UserRepo userRepo, UserMapper userMapper, PasswordEncoder passwordEncoder,
-            UTeMStaffRepo utemStaffRepo, UTeMStudentRepo utemStudentRepo, EmailService emailService) {
+            UTeMStaffRepo utemStaffRepo, UTeMStudentRepo utemStudentRepo) {
         this.userRepo = userRepo;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.utemStaffRepo = utemStaffRepo;
         this.utemStudentRepo = utemStudentRepo;
-        this.emailService = emailService;
     }
 
     @Override
@@ -64,7 +61,7 @@ public class UserServiceImpl implements UserService {
             return new EmailCheckResponse(EmailCheckResult.EMAIL_NOT_FOUND, null);
         }
 
-        emailService.sendVerificationCode(email);
+        // emailService.sendVerificationCode(email);
 
         return new EmailCheckResponse(EmailCheckResult.VALID_EMAIL, dto);
     }
@@ -181,6 +178,15 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepo.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword)); // passwordEncoder = BCrypt
+        userRepo.save(user);
     }
 
     @Override

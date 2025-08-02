@@ -18,19 +18,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.utem.event_hub_navigation.dto.PasswordResetRequest;
 import com.utem.event_hub_navigation.dto.PasswordUpdateDTO;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.User;
+import com.utem.event_hub_navigation.service.EmailService;
 import com.utem.event_hub_navigation.service.UserService;
+import com.utem.event_hub_navigation.service.VerificationCodeService;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+  
+    private final EmailService emailService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, EmailService emailService) {
+        this.emailService = emailService;
         this.userService = userService;
     }
 
@@ -158,6 +164,8 @@ public class UserController {
                 .body("Error updating password: " + e.getMessage());
         }
     }
+
+   
 
     @PatchMapping("/{userId}/update")
     public ResponseEntity<?> updatePhoneNumber(

@@ -3,7 +3,6 @@ package com.utem.event_hub_navigation.controller;
 import java.time.Duration;
 import java.util.Map;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -18,11 +17,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.utem.event_hub_navigation.dto.EmailCheckResponse;
+import com.utem.event_hub_navigation.dto.PasswordResetRequest;
 import com.utem.event_hub_navigation.dto.SignInRequest;
 import com.utem.event_hub_navigation.dto.SignUpRequest;
 import com.utem.event_hub_navigation.dto.UserDTO;
-import com.utem.event_hub_navigation.event.onVerifyEmailEvent;
 import com.utem.event_hub_navigation.service.AuthService;
+import com.utem.event_hub_navigation.service.EmailService;
 import com.utem.event_hub_navigation.service.UserService;
 import com.utem.event_hub_navigation.service.VerificationCodeService;
 
@@ -39,7 +39,9 @@ public class AuthController {
 
     private final VerificationCodeService emailVerificationCodeService;
 
-    
+    private final EmailService emailService;
+
+
 
     @GetMapping("/verify-code")
     public ResponseEntity<?> verifyCode(@RequestParam String email, @RequestParam String code) {
@@ -64,6 +66,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "Email not found in university database."));
             case VALID_EMAIL:
+            emailService.sendVerificationCode(email);
                 return ResponseEntity.ok(Map.of("message", "Email is valid and not registered."));
             default:
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -117,6 +120,69 @@ public class AuthController {
         String email = authentication.getName();
         UserDTO authenticatUserDTO = userService.getUserByEmail(email);
         return ResponseEntity.ok(authenticatUserDTO);
+    }
+
+     @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @RequestBody PasswordResetRequest req) {
+        try {
+           
+            userService.resetPassword(
+                req.getEmail(), 
+                req.getNewPassword()
+            );
+
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("Password reset successfully.");
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error updating password: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/reset-password/send-code")
+    public ResponseEntity<?> sendResetPasswordCode(
+            @RequestParam String email) {
+        try {
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Email is required");
+            }
+            if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid email format");
+            }
+            emailService.sendResetPasswordEmail(email);
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body("Reset password code sent to " + email);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Invalid request parameters: " + e.getMessage()); 
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error updating password: " + e.getMessage());
+        }
+    }
+
+
+    @GetMapping("/verify-password-reset-code")
+    public ResponseEntity<?> verifyResetPasswordCode(@RequestParam String email, @RequestParam String code) {
+        System.out.println("Verifying reset password code for email: " + email + " with code: " + code);
+        boolean valid = emailVerificationCodeService.verifyCode(email, code);
+
+        if (valid) {
+            
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().body("Invalid or expired verification code.");
+        }
     }
 
     @PostMapping("/sign-out")

@@ -82,4 +82,40 @@ public class EmailServiceImpl implements EmailService {
                 "<p>This code expires in 10 minutes.</p>";
         sendHtmlEmail(email, subject, html);
     }
+
+    @Override
+    public void sendResetPasswordEmail(String email) {
+        EmailVerificationCode verificationCode = verificationCodeService.generateAndSaveVerificationCode(email);
+
+       
+        String code = verificationCode.getCode();
+        String subject = "FTMK Event Hub: Use OTP to Reset Your Password";
+        String html = "<!DOCTYPE html>" +
+                "<html>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<title>Password Reset OTP</title>" +
+                "</head>" +
+                "<body style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;'>" +
+                "  <div style='max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>"
+                +
+                "    <h2 style='color: #003366;'>FTMK Event Hub</h2>" +
+                "    <p>Hello,</p>" +
+                "    <p>You have requested to reset your password. Please use the following One-Time Password (OTP) to proceed:</p>"
+                +
+                "    <p style='font-size: 24px; font-weight: bold; color: #d9534f; text-align: center;'>" + code
+                + "</p>" +
+                "    <p>This OTP is valid for 10 minutes. Do not share it with anyone.</p>" +
+                "    <p>If you did not request this reset, please ignore this email.</p>" +
+                "    <br>" +
+                "    <p>Best regards,<br>FTMK Event Hub Team</p>" +
+                "    <hr style='margin-top: 40px;'>" +
+                "    <p style='font-size: 12px; color: #888888;'>This is an automated email, please do not reply to it.</p>"
+                +
+                "  </div>" +
+                "</body>" +
+                "</html>";
+
+        sendHtmlEmail(email, subject, html);
+    }
 }

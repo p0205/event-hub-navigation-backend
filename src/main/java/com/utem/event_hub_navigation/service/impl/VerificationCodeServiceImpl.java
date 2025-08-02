@@ -18,7 +18,7 @@ public class VerificationCodeServiceImpl implements VerificationCodeService {
     private final EmailVerificationCodeRepo emailVerificationCodeRepo;
 
     @Override
-    public EmailVerificationCode generateAndSaveVerificationCode(String email) {
+    public EmailVerificationCode  generateAndSaveVerificationCode(String email) {
         String code = String.format("%06d", new Random().nextInt(999999)); // 6-digit OTP
 
         // delete existing tokens for same email

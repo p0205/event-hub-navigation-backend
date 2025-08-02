@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.utem.event_hub_navigation.EventCompletedReportEvent;
+import com.utem.event_hub_navigation.event.EventCompletedReportEvent;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.service.EventService;
@@ -27,6 +27,7 @@ public class EventCompletionScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * ?") // Example: Runs every hour at the beginning of the hour
+    // @Scheduled(cron = "*/10 * * * * ?") // Example: Runs every hour at the beginning of the hour
     // Other options: fixedRate, fixedDelay
     @Transactional
     public void markEventsAsCompleted() {

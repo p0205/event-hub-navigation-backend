@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.utem.event_hub_navigation.dto.EventArticleDTO;
 import com.utem.event_hub_navigation.dto.ArticleManualInputsDto;
-import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.service.impl.EventReportServiceImpl;
 
 @RequestMapping("/api/events/{eventId}/report")
@@ -46,10 +44,12 @@ public class EventReportController {
     public ResponseEntity<?> getEventBudgetReport(@PathVariable Integer eventId,
             @RequestParam(value = "format", defaultValue = "pdf") String format) {
         try {
-            eventReportService.storeReport(eventId, ReportType.ATTENDANCE);
+            // eventReportService.storeReport(eventId, ReportType.BUDGET);
 
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
+            System.out.println("Error generating budget report for event ID " + eventId + ": " + e.getMessage());
+
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
 

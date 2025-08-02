@@ -61,25 +61,31 @@ public class UserServiceImpl implements UserService {
             return new EmailCheckResponse(EmailCheckResult.EMAIL_NOT_FOUND, null);
         }
 
+        // emailService.sendVerificationCode(email);
+
         return new EmailCheckResponse(EmailCheckResult.VALID_EMAIL, dto);
     }
 
     @Override
     public boolean register(String email, String phoneNo, String rawPassword) {
+
         try {
             User user = userMapper.toUser(utemStudentRepo.findByEmail(email));
+            if (user == null) {
+                user = userMapper.toUser(utemStaffRepo.findByEmail(email));
+
+            }
+            user.setRole(email.contains("student") ? "PARTICIPANT" : "EVENT ORGANIZER");
             String hashPassword = passwordEncoder.encode(rawPassword);
             user.setCreatedAt(LocalDate.now());
             user.setPasswordHash(hashPassword);
             user.setPhoneNo(phoneNo);
             user.setMustChangePassword(false);
             user.setStatus(AccountStatus.ACTIVE);
-
-    
             userRepo.save(user);
             return true;
         } catch (Exception e) {
-           
+            System.out.println(e.toString());
             return false;
         }
     }
@@ -158,7 +164,7 @@ public class UserServiceImpl implements UserService {
 
             System.out.println(currentPassword);
             System.out.println(user.getPasswordHash());
-System.out.println("Encoded Current Password: " + passwordEncoder.encode(currentPassword));
+            System.out.println("Encoded Current Password: " + passwordEncoder.encode(currentPassword));
             System.out.println(passwordEncoder.matches(currentPassword, user.getPasswordHash()));
             // Verify current password
             if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
@@ -172,6 +178,15 @@ System.out.println("Encoded Current Password: " + passwordEncoder.encode(current
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public void resetPassword(String email, String newPassword) {
+        User user = userRepo.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword)); // passwordEncoder = BCrypt
+        userRepo.save(user);
     }
 
     @Override
@@ -223,7 +238,7 @@ System.out.println("Encoded Current Password: " + passwordEncoder.encode(current
         user.setGender(gender);
         user.setStatus(AccountStatus.ACTIVE);
         user.setRole("PARTICIPANT");
-        
+
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setMustChangePassword(true);
         user.setCreatedAt(LocalDate.now());
@@ -252,17 +267,17 @@ System.out.println("Encoded Current Password: " + passwordEncoder.encode(current
             }
 
             User user = userOpt.get();
-            
+
             // Encode the new password
             String encodedPassword = passwordEncoder.encode(newPassword);
             user.setPasswordHash(encodedPassword);
-            
+
             // Set mustChangePassword to false since it's an outsider account
             user.setMustChangePassword(false);
             user.setLastUpdatedAt(LocalDateTime.now());
-            
+
             userRepo.save(user);
-            
+
             // Verify the password was encoded correctly
             return passwordEncoder.matches(newPassword, user.getPasswordHash());
         } catch (Exception e) {

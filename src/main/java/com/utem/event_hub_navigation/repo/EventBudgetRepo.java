@@ -13,7 +13,7 @@ import com.utem.event_hub_navigation.model.EventBudgetKey;
 @Repository
 public interface EventBudgetRepo extends JpaRepository<EventBudget, EventBudgetKey> {
 
-
+    @Query("SELECT eb FROM EventBudget eb JOIN FETCH eb.budgetCategory WHERE eb.event = :event")
     List<EventBudget> findByEvent(Event event);
     
   

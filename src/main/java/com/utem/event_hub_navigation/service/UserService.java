@@ -19,8 +19,6 @@ public interface UserService {
 
     UserDTO getUserByEmail(String email);
 
-
-
     List<UserDTO> getUserByNameLike(String name);
 
     public List<UserDTO> findByEmailOrName(String query);
@@ -35,6 +33,7 @@ public interface UserService {
     
     boolean updatePassword(Integer userId, String currentPassword, String newPassword);
 
+    void resetPassword(String token, String newPassword) ;
 
     User createOutsiderAccount(String name, String email, String phoneNo, Character gender);
 

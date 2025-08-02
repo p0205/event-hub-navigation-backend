@@ -3,20 +3,15 @@ package com.utem.event_hub_navigation.service.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,11 +41,9 @@ import com.utem.event_hub_navigation.dto.SessionAttendanceDTO;
 import com.utem.event_hub_navigation.dto.SessionDTO;
 import com.utem.event_hub_navigation.mapper.SessionMapper;
 import com.utem.event_hub_navigation.model.Event;
-import com.utem.event_hub_navigation.model.EventMedia;
 import com.utem.event_hub_navigation.model.EventReport;
 import com.utem.event_hub_navigation.model.ReportType;
 import com.utem.event_hub_navigation.model.Session;
-import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.repo.AttendanceRepo;
 import com.utem.event_hub_navigation.repo.EventRepo;
 import com.utem.event_hub_navigation.repo.EventReportRepo;
@@ -134,41 +127,48 @@ public class EventReportServiceImpl implements EventReportService {
         }
 
         @Override
-        public void storeReport(Integer eventId, ReportType reportType) throws IOException {
+        public void storeReport(Integer eventId) throws IOException {
                 // Generate the report as a byte array
-                byte[] reportBytes;
-                String filename = "";
-                if (reportType == ReportType.ATTENDANCE) {
-                        reportBytes = generateEventAttendanceReport(eventId);
-                        filename = UUID.randomUUID() + "_EventAttendanceReport_" + eventId + ".pdf";
 
-                } else if (reportType == ReportType.BUDGET) {
-                        reportBytes = generateEventBudgetReport(eventId);
-                        filename = UUID.randomUUID() + "_EventBudgetReport_" + eventId + ".pdf";
+    
 
-                } else {
-                        throw new IllegalArgumentException("Unsupported report type: " + reportType);
-                }
-                // Generate a unique, sanitized filename
+                byte [] attendaceReportBytes = generateEventAttendanceReport(eventId);
+                String attendanceReportFilename = UUID.randomUUID() + "_EventAttendanceReport_" + eventId + ".pdf";
 
-                // Upload the file to Supabase
-                String fileUrl = supabaseStorageService.uploadFile(reportBytes, "event-report", filename);
+                byte [] budgetReportBytes = generateEventBudgetReport(eventId);
+                String budgetReportFilename = UUID.randomUUID() + "_EventBudgetReport_" + eventId + ".pdf";
 
+             
                 // Fetch the event and ensure it exists
                 Event event = eventRepo.findById(eventId)
                                 .orElseThrow(() -> new RuntimeException("Event with ID " + eventId + " not found."));
 
-                // Build and save the report
-                EventReport report = EventReport.builder()
+                                 // Upload the file to Supabase
+                String attendanceFileUrl = supabaseStorageService.uploadFile(attendaceReportBytes, "event-report", attendanceReportFilename);
+                String budgetFileUrl = supabaseStorageService.uploadFile(budgetReportBytes, "event-report", budgetReportFilename);
+
+                // Build and save the repor
+                EventReport attendanceReport = EventReport.builder()
                                 .event(event)
-                                .type(reportType)
-                                .fileUrl(fileUrl)
+                                .type(ReportType.ATTENDANCE)
+                                .fileUrl(attendanceFileUrl)
+                                .generatedAt(LocalDateTime.now())
+                                .build();
+                EventReport budgetReport = EventReport.builder()
+                                .event(event)
+                                .type(ReportType.BUDGET)
+                                .fileUrl(budgetFileUrl)
                                 .generatedAt(LocalDateTime.now())
                                 .build();
 
-                eventReportRepo.save(report);
-                System.out.println("Report stored successfully: " + fileUrl);
+                eventReportRepo.save(attendanceReport);
+                eventReportRepo.save(budgetReport);
+                eventReportRepo.save(attendanceReport);
+                System.out.println("Attendance Report stored successfully: " + attendanceFileUrl );
+                System.out.println("Budget Report stored successfully: " + budgetFileUrl );
         }
+
+    
 
         public byte[] generateEventAttendanceReport(Integer eventId) {
                 // The existing logic to fetch data and populate EventAttendanceReportDTO

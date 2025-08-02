@@ -98,7 +98,7 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public String checkIn(String payload, Integer participantId) throws Exception {
+    public String checkIn(String payload, String email) throws Exception {
 
         QRPayload qrPayload = qrCodeGenerator.validateQRCode(payload);
 
@@ -106,9 +106,9 @@ public class AttendanceServiceImpl implements AttendanceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Event not found with ID: " + qrPayload.getEventId()));
 
-        User participant = userRepo.findById(participantId)
+        User participant = userRepo.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Participants Users not found with ID: " + participantId));
+                        "Participants Users not found with ID: " + email));
 
         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
         if (registration == null) {

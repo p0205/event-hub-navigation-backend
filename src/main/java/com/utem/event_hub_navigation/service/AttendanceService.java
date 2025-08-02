@@ -15,7 +15,7 @@ public interface AttendanceService {
 
     byte[] downloadQRCode(Integer evenrVenueId);
 
-    String checkIn(String payload, Integer participantId) throws Exception;
+    String checkIn(String payload, String email) throws Exception;
 
     Page<Attendee> getCheckInParticipants(Integer sessionId, Pageable pageable);
 

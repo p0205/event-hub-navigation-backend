@@ -43,6 +43,23 @@ public class AttendanceController {
     // return ResponseEntity.ok(response);
     // }
 
+    @PostMapping("/check_in")
+    public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
+        try {
+            System.out.println("Received check-in request: " + checkInRequest);
+            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
+                    checkInRequest.getEmail());
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid check-in request: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error during check-in: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No participant found with the provided ID.");
+        }
+    }
+
+
     @GetMapping(value = "/qr_download", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> downloadQRCode(@PathVariable("eventId") Integer eventId,
             @PathVariable("sessionId") Integer sessionId) {
@@ -97,18 +114,7 @@ public class AttendanceController {
         }
     }
 
-    @PostMapping("/check_in")
-    public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
-        try {
-            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
-                    checkInRequest.getParticipantId());
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
-        }
-    }
+   
 
     @GetMapping
     public ResponseEntity<?> getCheckInParticipants(

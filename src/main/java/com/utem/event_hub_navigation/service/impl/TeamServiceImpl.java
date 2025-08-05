@@ -1,6 +1,8 @@
 package com.utem.event_hub_navigation.service.impl;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -8,14 +10,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.utem.event_hub_navigation.dto.SimpleTeamEvent;
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.model.Event;
+import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.model.Role;
 import com.utem.event_hub_navigation.model.TeamMember;
 import com.utem.event_hub_navigation.model.TeamMemberKey;
 import com.utem.event_hub_navigation.model.User;
 import com.utem.event_hub_navigation.repo.TeamMemberRepo;
+import com.utem.event_hub_navigation.service.EmailService;
 import com.utem.event_hub_navigation.service.EventService;
 import com.utem.event_hub_navigation.service.RoleService;
 import com.utem.event_hub_navigation.service.TeamService;
@@ -29,42 +34,35 @@ public class TeamServiceImpl implements TeamService {
     private final EventService eventService;
     private final RoleService roleService;
     private final TeamMemberRepo teamMemberRepo;
+    private final EmailService emailService;
 
     @Autowired
     public TeamServiceImpl(UserService userService,
             EventService eventService,
             RoleService roleService,
-            TeamMemberRepo teamMemberRepo) {
+            TeamMemberRepo teamMemberRepo,
+            EmailService emailService) {
+        this.emailService = emailService;
         this.userService = userService;
         this.eventService = eventService;
         this.roleService = roleService;
         this.teamMemberRepo = teamMemberRepo;
     }
 
-    // Add team member
-    @Override
-    public void addTeamMemberRole(Event event, Role role,  Integer userId) throws Exception {
+    private void addTeamMemberRole(Event event, Role role, User user) throws Exception {
 
-        // Check if the user exists
-        User user = userService.getUserById(userId);
-        if (user == null) {
-            throw new Exception("Users not found");
-        }
-        TeamMemberKey teamMemberKey = new TeamMemberKey(event.getId(),user.getId(),  role.getId());
-        
-    
+        TeamMemberKey teamMemberKey = new TeamMemberKey(event.getId(), user.getId(), role.getId());
+
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberKey)
                 .user(user)
                 .event(event)
                 .role(role)
                 .build();
-               
+
         // Add team member to the event
         teamMemberRepo.save(teamMember);
     }
-    // Remove team member
-    // Get team members
 
     // @Override
     public Page<TeamMemberDTO> getTeamMembers(Integer eventId, Pageable pageable) {
@@ -96,9 +94,15 @@ public class TeamServiceImpl implements TeamService {
         }
 
         for (Integer userId : userIds) {
+                    // Check if the user exists
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new Exception("Users not found");
+        }
 
-            addTeamMemberRole(event, role, userId);
-
+            addTeamMemberRole(event, role, user);
+            System.out.println(user.getEmail());
+            // emailService.sendTeamAssignmentNotification(user.getEmail(), event.getName(), role.getName());
         }
     }
 
@@ -124,6 +128,21 @@ public class TeamServiceImpl implements TeamService {
     public List<UserDTOByTeamSearch> searchUsers(Integer eventId, String query, Integer roleId) {
         String searchQuery = "%" + query.toLowerCase() + "%";
         return teamMemberRepo.findSearchedUsersByTeamAndRole(eventId, searchQuery, roleId);
+    }
+
+    @Override
+    public Map<EventStatus, List<SimpleTeamEvent>> getTeamEvents(Integer userId) {
+        // Check if the user exists
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // Get team events for the user
+        List<SimpleTeamEvent> teamEvents = teamMemberRepo.findTeamEventsByUserId(userId);
+
+        return teamEvents.stream()
+                .collect(Collectors.groupingBy(SimpleTeamEvent::getStatus));
     }
 
 }

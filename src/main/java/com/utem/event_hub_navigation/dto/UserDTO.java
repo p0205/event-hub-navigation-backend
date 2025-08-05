@@ -3,8 +3,6 @@ package com.utem.event_hub_navigation.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.springframework.data.annotation.LastModifiedDate;
-
 import com.utem.event_hub_navigation.model.AccountStatus;
 
 import lombok.Builder;

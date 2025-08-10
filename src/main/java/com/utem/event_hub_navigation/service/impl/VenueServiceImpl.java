@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.utem.event_hub_navigation.dto.UpdateVenueRequest;
 import com.utem.event_hub_navigation.model.Venue;
 import com.utem.event_hub_navigation.model.VenueUtilizationData;
 import com.utem.event_hub_navigation.repo.VenueRepo;
@@ -39,7 +42,7 @@ public class VenueServiceImpl implements VenueService {
                 .stream()
                 .sorted(Comparator.comparing(Venue::getName)) // Sort by name
                 .collect(Collectors.toList());
-        
+
     }
 
     @Override
@@ -55,5 +58,30 @@ public class VenueServiceImpl implements VenueService {
     @Override
     public List<VenueUtilizationData> getVenueUtilizationData(LocalDateTime startDate, LocalDateTime endDate) {
         return venueRepo.getVenueUtilizationData(startDate, endDate);
+    }
+
+    @Override
+    public Venue updateVenue(UpdateVenueRequest request) {
+        Venue venue = venueRepo.findById(request.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Venue not found with ID: " + request.getId()));
+        if (request.getName() != null) {
+            venue.setName(request.getName());
+        }
+        if (request.getFullName() != null) {
+            venue.setFullName(request.getFullName());
+        }
+        if (request.getCapacity() != null) {
+            if (request.getCapacity() < 0) {
+                throw new IllegalArgumentException("Capacity cannot be negative.");
+            }
+            venue.setCapacity(request.getCapacity());
+        }
+        
+        return venueRepo.save(venue);
+    }
+
+    @Override
+    public Page<Venue> getAllVenuesByFloor(Pageable pageable, Integer floorLevel) {
+        return venueRepo.findByFloorLevel(pageable, floorLevel);
     }
 }

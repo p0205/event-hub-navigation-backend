@@ -37,6 +37,7 @@ import com.utem.event_hub_navigation.dto.EventBudgetDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.EventStatusCard;
 import com.utem.event_hub_navigation.dto.ParticipantEventDetails;
 import com.utem.event_hub_navigation.dto.ParticipantEventDetailsSessionDTO;
 import com.utem.event_hub_navigation.dto.ParticipantEventDetailsVenueDTO;
@@ -763,4 +764,9 @@ public class EventServiceImpl implements EventService {
 
     workbook.write(baos);return baos.toByteArray();
 
-}}}
+}}
+
+    @Override
+    public List<EventStatusCard> getNumberOfEventsByStatus(Integer userId) {
+       return eventRepo.getNumberOfEventsByStatus(userId);
+    }}

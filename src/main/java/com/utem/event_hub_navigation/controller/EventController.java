@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.EventStatusCard;
 import com.utem.event_hub_navigation.dto.SimpleTeamEvent;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
@@ -178,16 +179,16 @@ public class EventController {
     public ResponseEntity<?> getTeamEventsByUser(
             @RequestParam Integer userId) {
         try {
-            Map<EventStatus,List<SimpleTeamEvent>> events = teamService.getTeamEvents(userId);
+            Map<EventStatus, List<SimpleTeamEvent>> events = teamService.getTeamEvents(userId);
             return ResponseEntity.ok(events);
         } catch (IllegalArgumentException e) {
             return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(e.getMessage());
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An error occurred while creating the account: " + e.getMessage());
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while creating the account: " + e.getMessage());
         }
     }
 
@@ -321,6 +322,20 @@ public class EventController {
             return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime, endDateTime));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
+    // Get Number of Events by Status (Active, Completed)
+    @GetMapping("/{userId}/event-number-by-status")
+    public ResponseEntity<?> getNumberOfEventsByStatus(@PathVariable("userId") Integer userId) {
+        try {
+            List<EventStatusCard> eventStatusCards = eventService.getNumberOfEventsByStatus(userId);
+            return ResponseEntity.ok(eventStatusCards);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }

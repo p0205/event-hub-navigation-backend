@@ -12,6 +12,7 @@ import com.utem.event_hub_navigation.dto.CalendarEventDTO;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.EventStatusCard;
 import com.utem.event_hub_navigation.dto.ParticipantEventDetails;
 import com.utem.event_hub_navigation.dto.ParticipantEventOverviewResponse;
 import com.utem.event_hub_navigation.dto.ParticipantsDemographicsDTO;
@@ -91,6 +92,8 @@ public interface EventService {
     LocalDateTime endDateTime) throws Exception;
 
     public ParticipantEventDetails getEventDetails(Integer eventId) throws Exception;
+
+    List<EventStatusCard> getNumberOfEventsByStatus(Integer userId);
 
   
 

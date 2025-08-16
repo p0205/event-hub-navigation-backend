@@ -3,9 +3,12 @@ package com.utem.event_hub_navigation.repo;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.model.Venue;
@@ -13,10 +16,12 @@ import com.utem.event_hub_navigation.model.VenueUtilizationData;
 
 @Repository
 public interface VenueRepo extends JpaRepository<Venue, Integer> {
-    // Custom query methods can be defined here if needed
-    // For example, find by name or location
-    // List<Venue> findByName(String name);
+
     List<Venue> findByCapacityGreaterThanEqual(Integer capacity);
+
+    @Query("SELECT v FROM Venue v JOIN v.node n WHERE n.floor.id = :floorLevel")
+    Page<Venue> findByFloorLevel(@NonNull Pageable pageable, @Param("floorLevel") Integer floorLevel);
+
 
     @Query(value = """
         SELECT new com.utem.event_hub_navigation.model.VenueUtilizationData(

@@ -37,5 +37,6 @@ public class Venue {
     private String fullName;
     private Integer capacity;
 
+    private String qrCodeUrl;
 
 }

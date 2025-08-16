@@ -89,6 +89,7 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
         try {
+            System.out.println("Attempting to sign in with email: " + req.getEmail());
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
@@ -99,14 +100,13 @@ public class AuthController {
                     .build();
 
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(authenticatUserDTO);
         } catch (AuthenticationException authException) {
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", authException.toString()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password."));
         } catch (Exception e) {
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.toString()));
         }
     }

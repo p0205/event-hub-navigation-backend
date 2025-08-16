@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.dto.CalendarEventDTO;
+import com.utem.event_hub_navigation.dto.EventStatusCard;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.model.User;
@@ -47,7 +48,14 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                 JOIN session s ON s.event_id = e.id
                 LEFT JOIN session_venue sv ON sv.session_id = s.id
                 LEFT JOIN venue v ON v.id = sv.venue_id
-                WHERE e.user_id = :organizerId AND e.status = 'ACTIVE' AND s.start_date_time >= NOW()
+                LEFT JOIN team_member tm ON tm.event_id = e.id
+                WHERE 
+                (
+                    e.user_id = :organizerId
+                    OR tm.user_id = :organizerId
+                )
+                AND e.status = 'ACTIVE'
+                AND s.start_date_time >= NOW()
                 GROUP BY s.id
             """, nativeQuery = true)
     List<CalendarEventDTO> findCalendarEntriesByOrganizerId(@Param("organizerId") Integer organizerId);
@@ -214,4 +222,16 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
         nativeQuery = true
     )
     List<Object[]> fetchEventTypePerformanceData(@Param("startDate") String startDate, @Param("endDate") String endDate);
+
+
+    @Query(value = """
+                SELECT
+                    e.status AS eventStatus,
+                    COUNT(DISTINCT e.id) AS totalEvents
+                FROM event e
+                LEFT JOIN team_member tm ON tm.event_id = e.id
+                WHERE  e.user_id = :userId OR tm.user_id = :userId
+                GROUP BY e.status
+            """, nativeQuery = true)
+    List<EventStatusCard> getNumberOfEventsByStatus(Integer userId);
 }

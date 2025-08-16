@@ -3,6 +3,7 @@ package com.utem.event_hub_navigation.controller;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,20 +30,25 @@ import org.springframework.web.server.ResponseStatusException;
 import com.utem.event_hub_navigation.dto.EventDTO;
 import com.utem.event_hub_navigation.dto.EventResponseByStatus;
 import com.utem.event_hub_navigation.dto.EventSimpleResponse;
+import com.utem.event_hub_navigation.dto.EventStatusCard;
+import com.utem.event_hub_navigation.dto.SimpleTeamEvent;
 import com.utem.event_hub_navigation.dto.UserDTO;
 import com.utem.event_hub_navigation.model.Event;
 import com.utem.event_hub_navigation.model.EventStatus;
 import com.utem.event_hub_navigation.service.EventService;
+import com.utem.event_hub_navigation.service.TeamService;
 
 @RestController
 @RequestMapping("/api/events")
 public class EventController {
 
     private final EventService eventService;
+    private final TeamService teamService;
 
     @Autowired
     // --- Use constructor injection for ObjectMapper and EventService ---
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, TeamService teamService) {
+        this.teamService = teamService;
         this.eventService = eventService;
         // You do NOT need to manually register the module here if using Spring Boot
         // auto-config
@@ -52,7 +58,8 @@ public class EventController {
 
     // Create a new event
     // POST /events?organizerId=...
-    // The request body should contain event details *without* the full Users object,
+    // The request body should contain event details *without* the full Users
+    // object,
     // but the organizerId is passed as a request parameter.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EventDTO> createEvent(
@@ -66,11 +73,9 @@ public class EventController {
             @RequestPart(value = "supportingDocument", required = false) MultipartFile supportingDocument) {
         EventDTO dto = eventService.prepareAndValidateEvent(
                 name, description, organizerIdString,
-                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument,type);
-                // dto.setType(type);
-System.out.println("create new event");
+                participantsNoString, sessionsJson, eventBudgetsJson, supportingDocument, type);
+        // dto.setType(type);
         EventDTO savedEvent = eventService.createEvent(dto);
-        System.out.println("create new event end");
         return new ResponseEntity<>(savedEvent, HttpStatus.CREATED);
     }
 
@@ -124,6 +129,7 @@ System.out.println("create new event");
         // The fetched event will include the associated organizer (potentially lazily
         // loaded)
         String eventName = eventService.getEventName(id);
+
         if (eventName != null)
             return ResponseEntity.ok(eventName);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -156,8 +162,6 @@ System.out.println("create new event");
         }
     }
 
-    // --- Custom Query Endpoints ---
-
     // Get events by organizer Users ID and status
     // GET /api/events/search?organizerId=...&status=...
     @GetMapping("/byOrganizerAndStatus")
@@ -169,17 +173,25 @@ System.out.println("create new event");
         return ResponseEntity.ok(events);
     }
 
-    // Get events by date
-    // GET /events/byDate?date=YYYY-MM-DD
-    // @GetMapping("/byDate")
-    // public ResponseEntity<List<Event>> getEventsByDate(
-    // @RequestParam LocalDate date) {
+    // Get events by userId (as a team member)
+    // GET /events/team-events?userId=...
+    @GetMapping("/team-events")
+    public ResponseEntity<?> getTeamEventsByUser(
+            @RequestParam Integer userId) {
+        try {
+            Map<EventStatus, List<SimpleTeamEvent>> events = teamService.getTeamEvents(userId);
+            return ResponseEntity.ok(events);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while creating the account: " + e.getMessage());
+        }
+    }
 
-    // List<Event> events = eventService.getEventsByDate(date);
-    // return ResponseEntity.ok(events);
-    // }
-
-    // Get events by organizer Users ID
     // GET /events/byOrganizer?organizerId=...
     @GetMapping("/byOrganizer")
     public ResponseEntity<EventResponseByStatus> getEventsByOrganizer(
@@ -209,10 +221,9 @@ System.out.println("create new event");
         return ResponseEntity.ok(participantList);
     }
 
-
-     @GetMapping("/{eventId}/participants/export")
+    @GetMapping("/{eventId}/participants/export")
     public ResponseEntity<byte[]> exportParticipants( // Changed method name
-    
+
             @PathVariable Integer eventId) { // sessionName is optional for filename
 
         try {
@@ -221,13 +232,16 @@ System.out.println("create new event");
 
             // Determine the filename based on sessionName or default
             String filename;
-           
-                filename = String.format("participants-event-%d.xlsx", eventId); // Changed extension to .xlsx
-            
+
+            filename = String.format("participants-event-%d.xlsx", eventId); // Changed extension to .xlsx
 
             // Set HTTP Headers for file download
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")); // Changed Content-Type for XLSX
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")); // Changed
+                                                                                                                    // Content-Type
+                                                                                                                    // for
+                                                                                                                    // XLSX
             // Force download and specify filename
             headers.setContentDispositionFormData("attachment", filename);
             // Set content length for better download progress indication
@@ -244,7 +258,8 @@ System.out.println("create new event");
             return ResponseEntity.internalServerError().build();
         } catch (Exception e) {
             // Catch any other unexpected errors
-            System.err.println("An unexpected error occurred during XLSX export for event " + eventId + ": " + e.getMessage());
+            System.err.println(
+                    "An unexpected error occurred during XLSX export for event " + eventId + ": " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -296,16 +311,15 @@ System.out.println("create new event");
         }
     }
 
-
     // Get calender events to be displayed
     @GetMapping("/calendar/all-events")
-    public ResponseEntity<?> getAllEventsByMonth( @RequestParam("startDateTime") LocalDateTime startDateTime,
-    @RequestParam("endDateTime") LocalDateTime endDateTime) {
+    public ResponseEntity<?> getAllEventsByMonth(@RequestParam("startDateTime") LocalDateTime startDateTime,
+            @RequestParam("endDateTime") LocalDateTime endDateTime) {
         try {
             System.out.println("Start Date: " + startDateTime);
             System.out.println("End Date: " + endDateTime);
-            
-            return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime,endDateTime));
+
+            return ResponseEntity.ok(eventService.getAllCalendarEventByMonth(startDateTime, endDateTime));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -313,7 +327,20 @@ System.out.println("create new event");
         }
     }
 
-    
+    // Get Number of Events by Status (Active, Completed)
+    @GetMapping("/{userId}/event-number-by-status")
+    public ResponseEntity<?> getNumberOfEventsByStatus(@PathVariable("userId") Integer userId) {
+        try {
+            List<EventStatusCard> eventStatusCards = eventService.getNumberOfEventsByStatus(userId);
+            return ResponseEntity.ok(eventStatusCards);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
         try {
@@ -325,7 +352,7 @@ System.out.println("create new event");
         }
     }
 
-    //Get Participants' Upcoming Events
+    // Get Participants' Upcoming Events
     @GetMapping("/participant/upcoming-events")
     public ResponseEntity<?> getParticipantUpcomingEvents(@RequestParam("userId") Integer userId) {
         try {
@@ -336,7 +363,8 @@ System.out.println("create new event");
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
-    //Get Participants' Past Events
+
+    // Get Participants' Past Events
     @GetMapping("/participant/past-events")
     public ResponseEntity<?> getParticipantPastEvents(@RequestParam("userId") Integer userId) {
         try {
@@ -347,7 +375,8 @@ System.out.println("create new event");
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
-    //Get Participants' Past Events
+
+    // Get Participants' Past Events
     @GetMapping("/participant/calendar-events")
     public ResponseEntity<?> getParticipantEventsByMonth(
             @RequestParam("userId") Integer userId,
@@ -362,7 +391,7 @@ System.out.println("create new event");
         }
     }
 
-    //Get Event Details
+    // Get Event Details
     @GetMapping("/{eventId}/details")
     public ResponseEntity<?> getEventDetails(@PathVariable("eventId") Integer eventId) {
         try {
@@ -373,6 +402,5 @@ System.out.println("create new event");
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }
-    
 
 }

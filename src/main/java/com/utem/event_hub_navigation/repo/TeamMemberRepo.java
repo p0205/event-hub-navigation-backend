@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.utem.event_hub_navigation.dto.SimpleTeamEvent;
 import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.model.TeamMember;
@@ -44,6 +45,23 @@ public interface TeamMemberRepo extends JpaRepository<TeamMember, TeamMemberKey>
             GROUP BY u.id, u.name, u.email
             """, nativeQuery = true)
     Page<TeamMemberDTO> findTeamMembersWithRolesByEventId(@Param("eventId") Integer eventId, Pageable pageable);
+
+
+    @Query(value = """
+            SELECT
+                e.id as id,
+                e.name as name,
+                e.start_date_time as startDateTime,
+                e.status as status,
+               GROUP_CONCAT(r.name SEPARATOR ', ') as roles
+            FROM team_member tm
+            JOIN event e ON tm.event_id = e.id
+            JOIN users u ON tm.user_id = u.id
+            JOIN role r ON tm.role_id = r.id
+            WHERE tm.user_id = :userId
+            GROUP BY e.id, e.name, e.start_date_time, e.status
+            """, nativeQuery = true)
+    List<SimpleTeamEvent> findTeamEventsByUserId(@Param("userId") Integer userId);
 
     @Query(value = """
             SELECT

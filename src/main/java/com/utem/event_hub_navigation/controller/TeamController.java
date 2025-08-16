@@ -20,9 +20,13 @@ import com.utem.event_hub_navigation.dto.TeamMemberDTO;
 import com.utem.event_hub_navigation.dto.UserDTOByTeamSearch;
 import com.utem.event_hub_navigation.service.TeamService;
 
+
+
+
 @RestController
 @RequestMapping("/api/events/{eventId}/teams")
 public class TeamController {
+
 
     private final TeamService teamService;
 
@@ -31,21 +35,6 @@ public class TeamController {
         this.teamService = teamService;
     }
 
-    // //Add team member
-    // @PostMapping
-    // public ResponseEntity<?> addTeamMember(@PathVariable("eventId") Integer
-    // eventId, @RequestParam Integer userId, @RequestParam Integer roleId){
-    // try {
-    // teamService.addTeamMember(eventId, userId, roleId);
-
-    // return ResponseEntity.status(HttpStatus.CREATED).build();
-    // } catch (IllegalArgumentException e) {
-    // return ResponseEntity.badRequest().body(e.getMessage());
-    // } catch (Exception e) {
-    // return ResponseEntity.internalServerError().body("Failed to add member: " +
-    // e.getMessage());
-    // }
-    // }
 
     // Add team member
     @PostMapping
@@ -53,7 +42,7 @@ public class TeamController {
             @RequestParam List<Integer> userIds, @RequestParam Integer roleId) {
         try {
             teamService.addTeamMembers(eventId, userIds, roleId);
-
+            
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
@@ -63,6 +52,8 @@ public class TeamController {
             return ResponseEntity.internalServerError().body("Failed to add member: " + e.getMessage());
         }
     }
+    
+   
 
     // Get team members
     @GetMapping

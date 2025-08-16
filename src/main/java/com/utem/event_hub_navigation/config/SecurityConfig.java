@@ -90,7 +90,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Correctly specify all allowed origins in a single list
-        configuration.setAllowedOrigins(List.of(frontendUrl, "http://192.168.3.109:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://192.168.3.109:3000"));
         
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         

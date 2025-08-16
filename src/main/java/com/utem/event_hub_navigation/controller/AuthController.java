@@ -93,7 +93,7 @@ public class AuthController {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(false)
+                    .secure(true)
                     .path("/")
                     .sameSite("Strict")
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry

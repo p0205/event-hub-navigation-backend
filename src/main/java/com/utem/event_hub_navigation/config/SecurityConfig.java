@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/events/calendar/all-events").permitAll()
                         .requestMatchers("/api/events/{eventId}/details").permitAll()
                         .requestMatchers("/api/check_in").permitAll()
-                        
+
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -84,20 +84,20 @@ public class SecurityConfig {
         return builder.build();
     }
 
-  
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Correctly specify all allowed origins in a single list
-        configuration.setAllowedOrigins(List.of(frontendUrl));
-        
+        configuration.setAllowedOrigins(List.of( "http://localhost:3000"));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        
-        // It's more secure to list specific headers like "Authorization", "Content-Type"
+
+        // It's more secure to list specific headers like "Authorization",
+        // "Content-Type"
         // but "*" is fine for development.
-        configuration.setAllowedHeaders(List.of("*")); 
-        
+        configuration.setAllowedHeaders(List.of("*"));
+
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

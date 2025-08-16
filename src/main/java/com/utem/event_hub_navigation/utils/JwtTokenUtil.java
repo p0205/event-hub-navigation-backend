@@ -16,10 +16,10 @@ import lombok.RequiredArgsConstructor;
 @Component
 public class JwtTokenUtil {
 
-    @Value("${jwt.secretKey}")
+    
     private static String SECRET_KEY;
 
-    @Value("${jwt.expirationMs}")
+    
     private static long JWT_EXPIRATION_MS;
 
     @Value("${jwt.secretKey}")

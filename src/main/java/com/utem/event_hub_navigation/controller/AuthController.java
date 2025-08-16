@@ -89,6 +89,7 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
         try {
+            System.out.println("Attempting to sign in with email: " + req.getEmail());
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
@@ -99,6 +100,7 @@ public class AuthController {
                     .build();
 
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(authenticatUserDTO);

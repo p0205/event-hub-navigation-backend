@@ -76,6 +76,9 @@ public class VenueServiceImpl implements VenueService {
             }
             venue.setCapacity(request.getCapacity());
         }
+        if (request.getQrCodeUrl() != null) {
+            venue.setQrCodeUrl(request.getQrCodeUrl());
+        }
         
         return venueRepo.save(venue);
     }

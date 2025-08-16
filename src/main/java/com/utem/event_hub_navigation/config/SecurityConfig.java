@@ -3,6 +3,7 @@ package com.utem.event_hub_navigation.config;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -32,6 +33,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -86,7 +90,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Correctly specify all allowed origins in a single list
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://192.168.3.109:3000"));
+        configuration.setAllowedOrigins(List.of(frontendUrl, "http://192.168.3.109:3000"));
         
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         

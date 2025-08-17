@@ -3,7 +3,6 @@ package com.utem.event_hub_navigation.config;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -34,9 +33,6 @@ public class SecurityConfig {
     @Autowired
     private final UserDetailsServiceImpl userDetailsServiceImpl;
 
-    @Value("${frontend.url}")
-    private String frontendUrl;
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -52,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/events/calendar/all-events").permitAll()
                         .requestMatchers("/api/events/{eventId}/details").permitAll()
                         .requestMatchers("/api/check_in").permitAll()
-
+                        
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -84,20 +80,20 @@ public class SecurityConfig {
         return builder.build();
     }
 
+  
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
+        
         // Correctly specify all allowed origins in a single list
-        configuration.setAllowedOrigins(List.of( "http://localhost:3000"));
-
+        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://event-hub-website.onrender.com" ));
+        
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-
-        // It's more secure to list specific headers like "Authorization",
-        // "Content-Type"
+        
+        // It's more secure to list specific headers like "Authorization", "Content-Type"
         // but "*" is fine for development.
-        configuration.setAllowedHeaders(List.of("*"));
-
+        configuration.setAllowedHeaders(List.of("*")); 
+        
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

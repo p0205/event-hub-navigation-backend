@@ -233,5 +233,5 @@ public interface EventRepo extends JpaRepository<Event, Integer> {
                 WHERE  e.user_id = :userId OR tm.user_id = :userId
                 GROUP BY e.status
             """, nativeQuery = true)
-    List<EventStatusCard> getNumberOfEventsByStatus(Integer userId);
+    List<EventStatusCard> getNumberOfEventsByStatus(@Param("userId") Integer userId);
 }

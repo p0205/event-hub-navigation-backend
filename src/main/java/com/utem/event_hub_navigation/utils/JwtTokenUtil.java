@@ -16,10 +16,10 @@ import lombok.RequiredArgsConstructor;
 @Component
 public class JwtTokenUtil {
 
-    
+    @Value("${jwt.secretKey}")
     private static String SECRET_KEY;
 
-    
+    @Value("${jwt.expirationMs}")
     private static long JWT_EXPIRATION_MS;
 
     @Value("${jwt.secretKey}")
@@ -47,7 +47,6 @@ public class JwtTokenUtil {
 
     public static boolean validateToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-        System.out.println("validateToken");
         try {
             Jwts.parser()
                     .verifyWith(key)

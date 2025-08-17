@@ -89,18 +89,16 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
         try {
-            System.out.println("Attempting to sign in with email: " + req.getEmail());
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(true)
+                    .secure(false)
                     .path("/")
                     .sameSite("Strict")
                     .maxAge(Duration.ofHours(1)) // Match your JWT expiry
                     .build();
 
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
-
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(authenticatUserDTO);

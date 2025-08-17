@@ -61,11 +61,12 @@ public class BudgetCategoryController {
         return new ResponseEntity<>(budgetCategory, HttpStatus.OK);
     }
 
-    // @GetMapping
-    // public ResponseEntity<List<BudgetCategory>> getAllBudgetCategories() {
-    //     List<BudgetCategory> budgetCategories = budgetCategoryService.getAllBudgetCategories();
-    //     return new ResponseEntity<>(budgetCategories, HttpStatus.OK);
-    // }
+    @GetMapping("/all")
+    public ResponseEntity<List<BudgetCategory>> getAllBudgetCategories() {
+        System.out.println("fetch All budget");
+        List<BudgetCategory> budgetCategories = budgetCategoryService.getAllBudgetCategories();
+        return new ResponseEntity<>(budgetCategories, HttpStatus.OK);
+    }
 
     @GetMapping
     public ResponseEntity<?> getAllBudgetCategories(

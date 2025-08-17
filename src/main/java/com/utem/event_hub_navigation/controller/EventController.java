@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -344,10 +345,13 @@ public class EventController {
     @GetMapping("/calendar")
     public ResponseEntity<?> getCalenderEvent(@RequestParam("userId") Integer userId) {
         try {
+            System.out.println("User ID: " + userId);
             return ResponseEntity.ok(eventService.getCalendarEvent(userId));
         } catch (IllegalArgumentException e) {
+            System.out.println("Error fetching calendar events: " + e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            System.out.println("Error fetching calendar events: " + e.getMessage());
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
         }
     }

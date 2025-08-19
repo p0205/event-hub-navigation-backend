@@ -187,11 +187,11 @@ public class AuthController {
     public ResponseEntity<?> signOut() {
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(0) // Expire immediately
-                .build();
+                    .secure(true) // 1. Set to true for HTTPS
+                    .path("/")
+                    .sameSite("None") // 2. Set to None for cross-site requests
+                    .maxAge(Duration.ofHours(1))
+                    .build();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

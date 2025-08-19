@@ -92,10 +92,10 @@ public class AuthController {
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(false)
+                    .secure(true) // 1. Set to true for HTTPS
                     .path("/")
-                    .sameSite("Strict")
-                    .maxAge(Duration.ofHours(1)) // Match your JWT expiry
+                    .sameSite("None") // 2. Set to None for cross-site requests
+                    .maxAge(Duration.ofHours(1))
                     .build();
 
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
@@ -190,8 +190,8 @@ public class AuthController {
                     .secure(true) // 1. Set to true for HTTPS
                     .path("/")
                     .sameSite("None") // 2. Set to None for cross-site requests
-                    .maxAge(Duration.ofHours(1))
-                    .build();
+                    .maxAge(0) // Expire immediately
+                    .build(); 
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

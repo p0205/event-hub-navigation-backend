@@ -34,7 +34,7 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
     Boolean existsByEventAndParticipant(Event event, User user);
 
     @Query("SELECT count(r.id) FROM Registration r WHERE r.event.id = :eventId")
-    int countByEventId(Integer eventId);
+    int countByEventId(@Param("eventId") Integer eventId);
 
     @Query("""
             SELECT u.faculty, COUNT(u.id)

@@ -2,11 +2,18 @@ package com.utem.event_hub_navigation.dto;
 
 
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonDeserialize(builder = ArticleManualInputsDto.ArticleManualInputsDtoBuilder.class)
 public class ArticleManualInputsDto {
     private String organizingBody; // Official name of organizing body or club
     private String creditIndividuals; // List of individuals to credit (speakers, facilitators, etc.)

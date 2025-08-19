@@ -3,14 +3,19 @@ package com.utem.event_hub_navigation.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * DTO for post-event article generation, combining database and manual input fields.
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventArticleDTO {
     // Database-derived fields
     /** Event name (from event table) */

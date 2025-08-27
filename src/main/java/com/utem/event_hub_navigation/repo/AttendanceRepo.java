@@ -57,6 +57,6 @@ public interface AttendanceRepo extends JpaRepository<Attendance, Integer> {
     List<Attendee> findCheckInParticipantsBySession(@Param("sessionId") Integer sessionId);
 
     @Query("SELECT count(a) FROM Attendance a JOIN a.session s WHERE s.id = :sessionId")
-    int countBySessionId(Integer sessionId);
+    int countBySessionId(@Param("sessionId") Integer sessionId);
 
 }

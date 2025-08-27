@@ -330,6 +330,7 @@ public class EventController {
     // Get Number of Events by Status (Active, Completed)
     @GetMapping("/{userId}/event-number-by-status")
     public ResponseEntity<?> getNumberOfEventsByStatus(@PathVariable("userId") Integer userId) {
+        System.out.println("Backend controller: getNumberOfEventsByStatus");
         try {
             List<EventStatusCard> eventStatusCards = eventService.getNumberOfEventsByStatus(userId);
             return ResponseEntity.ok(eventStatusCards);

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.utem.event_hub_navigation.dto.Attendee;
+import com.utem.event_hub_navigation.dto.CheckInRequest;
 import com.utem.event_hub_navigation.dto.QRPayload;
 import com.utem.event_hub_navigation.model.Attendance;
 import com.utem.event_hub_navigation.model.AttendanceKey;
@@ -97,18 +98,63 @@ public class AttendanceServiceImpl implements AttendanceService {
         return null;
     }
 
-    @Override
-    public String checkIn(String payload, String email) throws Exception {
+//     @Override
+//     public String checkIn(String payload, String email) throws Exception {
+// System.out.println("Inside checkIn. Email is: " + email);
+//         // QRPayload qrPayload = qrCodeGenerator.validateQRCode(payload);
+//         QRPayload qrPayload = qrCodeGenerator.validateJSONQRCode(payload);
 
-        QRPayload qrPayload = qrCodeGenerator.validateQRCode(payload);
+//         Event event = eventRepo.findById(qrPayload.getEventId())
+//                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+//                         "Event not found with ID: " + qrPayload.getEventId()));
+
+//         User participant = userRepo.findByEmail(email)
+//                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+//                         "Participants Users not found with ID: " + email));
+
+//         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
+//         if (registration == null) {
+//             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+//                     "Registration not found");
+//         }
+
+//         Session session = sessionRepo.findById(qrPayload.getSessionId())
+//                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+//                         "Session not found with ID: " + qrPayload.getSessionId()));
+
+//         if (attendanceRepo.existsBysessionAndRegistration(session, registration))
+//             return "Already Check-In";
+
+//         AttendanceKey key = AttendanceKey.builder()
+//                 .sessionId(qrPayload.getSessionId())
+//                 .registrationId(registration.getId())
+//                 .build();
+
+//         Attendance attendance = Attendance.builder()
+//                 .id(key)
+//                 .session(session)
+//                 .registration(registration)
+//                 .checkinDateTime(LocalDateTime.now())
+//                 .build();
+
+//         attendanceRepo.save(attendance);
+//         return "Check In Successfully";
+
+//     }
+
+    @Override
+    public String checkInById(CheckInRequest request) throws Exception {
+        System.out.println("Inside checkInById. Participant ID is: " + request.getParticipantId());
+
+        QRPayload qrPayload = qrCodeGenerator.validateJSONQRCode(request.getQrCodePayload());
 
         Event event = eventRepo.findById(qrPayload.getEventId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Event not found with ID: " + qrPayload.getEventId()));
 
-        User participant = userRepo.findByEmail(email)
+        User participant = userRepo.findById(request.getParticipantId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Participants Users not found with ID: " + email));
+                        "Participants Users not found with ID: " + request.getParticipantId()));
 
         Registration registration = registrationRepo.findByEventAndParticipant(event, participant);
         if (registration == null) {

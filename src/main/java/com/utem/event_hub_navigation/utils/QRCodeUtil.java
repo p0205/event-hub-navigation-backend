@@ -47,15 +47,17 @@ public class QRCodeUtil {
                 .encodeToString(mac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8)));
 
         // 4) Build payload object
-        QRPayload p = new QRPayload(eventId, sessionId, expires, sig);
+        QRPayload p = new QRPayload("attendance",eventId, sessionId, expires, sig);
 
         // 5. Serialize to JSON and Base64 encode
-        String json = mapper.writeValueAsString(p);
-        String encoded = Base64.getUrlEncoder().withoutPadding()
-                .encodeToString(json.getBytes(StandardCharsets.UTF_8));
+        // String json = mapper.writeValueAsString(p);
+        // String encoded = Base64.getUrlEncoder().withoutPadding()
+        //         .encodeToString(json.getBytes(StandardCharsets.UTF_8));
 
-        // 6. Return full URL
-        return "http://192.168.3.109:3000/public/check-in?q=" + encoded;
+        // // 6. Return full URL
+        // return "http://192.168.3.109:3000/public/check-in?q=" + encoded;
+        // 5. Serialize to JSON string
+        return mapper.writeValueAsString(p);
     }
 
     public byte[] generateQRCodeImage(String payload, int width, int height) throws Exception {
@@ -67,31 +69,62 @@ public class QRCodeUtil {
         }
     }
 
-    public QRPayload validateQRCode(String encodedPayload) throws Exception {
-        // Decode and parse QR payload
-        byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPayload);
-        String json = new String(decodedBytes, StandardCharsets.UTF_8);
-        QRPayload payload = new ObjectMapper().readValue(json, QRPayload.class);
+    // public QRPayload validateQRCode(String encodedPayload) throws Exception {
+    //     // Decode and parse QR payload
+    //     byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPayload);
+    //     String json = new String(decodedBytes, StandardCharsets.UTF_8);
+    //     QRPayload payload = new ObjectMapper().readValue(json, QRPayload.class);
 
-        // Validate signature
-        String toSign = payload.eventId + "|" + payload.sessionId + "|" + payload.expiresAt;
+    //     // Validate signature
+    //     String toSign = payload.eventId + "|" + payload.sessionId + "|" + payload.expiresAt;
+    //     Mac mac = Mac.getInstance("HmacSHA256");
+    //     mac.init(new SecretKeySpec(secretKeyBytes, "HmacSHA256"));
+    //     String expectedSig = Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(toSign.getBytes()));
+    //     if (!expectedSig.equals(payload.sig)) {
+    //         throw new IllegalArgumentException("Invalid QR signature.");
+    //     }
+
+    //     // Validate expiration
+    //     LocalDateTime expires = LocalDateTime.parse(payload.expiresAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    //     if (expires.isBefore(LocalDateTime.now())) {
+    //         throw new IllegalArgumentException("QR code expired.");
+    //     }
+
+    //     // Example: Save check-in record to DB
+    //     // attendanceRepository.save(new AttendanceRecord(participantId,
+    //     // payload.sessionId, LocalDateTime.now()));
+
+    //     return payload;
+    // }
+
+
+    public QRPayload validateJSONQRCode(String jsonPayload) throws Exception {
+        // 1. Parse the JSON payload directly (assuming the QR code holds the JSON string)
+        QRPayload payload;
+        try {
+            payload = new ObjectMapper().readValue(jsonPayload, QRPayload.class);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid QR code format.", e);
+        }
+    
+        // 2. Validate the signature
+        String dataToSign = payload.eventId + "|" + payload.sessionId + "|" + payload.expiresAt;
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec(secretKeyBytes, "HmacSHA256"));
-        String expectedSig = Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(toSign.getBytes()));
-        if (!expectedSig.equals(payload.sig)) {
-            throw new IllegalArgumentException("Invalid QR signature.");
+        String expectedSignature = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(mac.doFinal(dataToSign.getBytes(StandardCharsets.UTF_8)));
+    
+        if (!expectedSignature.equals(payload.sig)) {
+            throw new SecurityException("Invalid QR code signature.");
         }
-
-        // Validate expiration
-        LocalDateTime expires = LocalDateTime.parse(payload.expiresAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        if (expires.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("QR code expired.");
+    
+        // 3. Validate expiration
+        LocalDateTime expiresAt = LocalDateTime.parse(payload.expiresAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        if (expiresAt.isBefore(LocalDateTime.now())) {
+            throw new IllegalStateException("QR code has expired.");
         }
-
-        // Example: Save check-in record to DB
-        // attendanceRepository.save(new AttendanceRecord(participantId,
-        // payload.sessionId, LocalDateTime.now()));
-
+    
+        // 4. Return the validated payload for further processing
         return payload;
     }
 }

@@ -24,11 +24,12 @@ public class GeneralController {
         this.attendanceService = attendanceService;
     }
 
-    @PostMapping("/check_in")
+    @PostMapping("/check-in")
     public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
         try {
-            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
-                    checkInRequest.getEmail());
+            System.out.println("Received general check-in request: " + checkInRequest);
+
+            String result = attendanceService.checkInById(checkInRequest);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

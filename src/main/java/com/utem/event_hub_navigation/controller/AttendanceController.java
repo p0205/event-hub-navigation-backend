@@ -47,8 +47,9 @@ public class AttendanceController {
     public ResponseEntity<?> checkIn(@RequestBody CheckInRequest checkInRequest) {
         try {
             System.out.println("Received check-in request: " + checkInRequest);
-            String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
-                    checkInRequest.getEmail());
+            // String result = attendanceService.checkIn(checkInRequest.getQrCodePayload(),
+            //         checkInRequest.getEmail());
+            String result = attendanceService.checkInById(checkInRequest);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             System.out.println("Invalid check-in request: " + e.getMessage());

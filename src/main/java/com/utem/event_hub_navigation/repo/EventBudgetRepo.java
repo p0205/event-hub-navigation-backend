@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.utem.event_hub_navigation.model.Event;
@@ -14,7 +15,7 @@ import com.utem.event_hub_navigation.model.EventBudgetKey;
 public interface EventBudgetRepo extends JpaRepository<EventBudget, EventBudgetKey> {
 
     @Query("SELECT eb FROM EventBudget eb JOIN FETCH eb.budgetCategory WHERE eb.event = :event")
-    List<EventBudget> findByEvent(Event event);
+    List<EventBudget> findByEvent(@Param("event") Event event);
     
   
 
@@ -23,6 +24,6 @@ public interface EventBudgetRepo extends JpaRepository<EventBudget, EventBudgetK
         FROM EventBudget b
         WHERE b.event.id = :eventId
         """)
-    List<Object[]> findTotalBudgetAndExpenseByEventId(Integer eventId);
+    List<Object[]> findTotalBudgetAndExpenseByEventId(@Param("eventId") Integer eventId);
 
 }

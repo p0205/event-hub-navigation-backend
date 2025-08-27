@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.utem.event_hub_navigation.dto.Attendee;
+import com.utem.event_hub_navigation.dto.CheckInRequest;
 
 public interface AttendanceService {
 
@@ -15,9 +16,11 @@ public interface AttendanceService {
 
     byte[] downloadQRCode(Integer evenrVenueId);
 
-    String checkIn(String payload, String email) throws Exception;
+    // String checkIn(String payload, String email) throws Exception;
 
     Page<Attendee> getCheckInParticipants(Integer sessionId, Pageable pageable);
 
     public byte[] exportAttendanceXLSX(Integer sessionId) throws IOException ;
+
+    String checkInById(CheckInRequest request) throws Exception;
 }

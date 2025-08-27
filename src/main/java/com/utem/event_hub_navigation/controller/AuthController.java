@@ -48,6 +48,7 @@ public class AuthController {
         boolean valid = emailVerificationCodeService.verifyCode(email, code);
 
         if (valid) {
+            
             EmailCheckResponse response = userService.existInUTemDatabase(email);
             return ResponseEntity.ok(response.getUserDTO());
         } else {
@@ -89,18 +90,17 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> signIn(@RequestBody SignInRequest req) {
         try {
-            System.out.println("Attempting to sign in with email: " + req.getEmail());
             String token = authService.signIn(req);
             ResponseCookie cookie = ResponseCookie.from("jwt", token)
                     .httpOnly(true)
-                    .secure(true)
+                    // .secure(true) // 1. Set to true for HTTPS
+                    .secure(false) 
                     .path("/")
-                    .sameSite("Strict")
-                    .maxAge(Duration.ofHours(1)) // Match your JWT expiry
+                    .sameSite("None") // 2. Set to None for cross-site requests
+                    .maxAge(Duration.ofHours(1))
                     .build();
 
             UserDTO authenticatUserDTO = userService.getUserByEmail(req.getEmail());
-
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .body(authenticatUserDTO);
@@ -189,11 +189,11 @@ public class AuthController {
     public ResponseEntity<?> signOut() {
         ResponseCookie cookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(0) // Expire immediately
-                .build();
+                    .secure(true) // 1. Set to true for HTTPS
+                    .path("/")
+                    .sameSite("None") // 2. Set to None for cross-site requests
+                    .maxAge(0) // Expire immediately
+                    .build(); 
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

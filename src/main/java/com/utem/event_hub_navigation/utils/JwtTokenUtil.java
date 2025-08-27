@@ -47,7 +47,6 @@ public class JwtTokenUtil {
 
     public static boolean validateToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-        System.out.println("validateToken");
         try {
             Jwts.parser()
                     .verifyWith(key)

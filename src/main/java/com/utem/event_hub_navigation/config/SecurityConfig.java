@@ -86,7 +86,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Correctly specify all allowed origins in a single list
-        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://event-hub-website.onrender.com" ));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000","https://event-hub-website.onrender.com" ,"http://10.251.215.109:3000"));
         
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         

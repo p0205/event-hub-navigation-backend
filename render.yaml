@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: spring-app
+    env: docker
+    dockerfilePath: ./Dockerfile.spring
+    
+  - type: web
+    name: python-service
+    env: docker
+    dockerfilePath: ./Dockerfile.python

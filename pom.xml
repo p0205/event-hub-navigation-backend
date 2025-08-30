@@ -197,6 +197,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				 <version>3.8.1</version>
 				<configuration>
+				<parameters>true</parameters>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
@@ -225,17 +226,6 @@
 					</excludes>
 				</configuration>
 			</plugin>
-
-			<plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <image>
-                    <name>deepcodr/simplespringapp-${project.artifactId}:${project.version}</name>
-                    </image>
-                    <pullPolicy>IF_NOT_PRESENT</pullPolicy>
-                </configuration>
-            </plugin>
 		</plugins>
 	</build>
 

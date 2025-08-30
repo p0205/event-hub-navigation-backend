@@ -8,6 +8,8 @@ target/
 application.properties
 application.yml
 .env
+.env.*
+.config.ini
 
 ### STS ###
 .apt_generated

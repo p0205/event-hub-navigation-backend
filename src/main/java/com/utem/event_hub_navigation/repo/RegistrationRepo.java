@@ -97,8 +97,8 @@ public interface RegistrationRepo extends JpaRepository<Registration, Integer> {
                        e.start_date_time AS startDateTime,
                        e.end_date_time AS endDateTime,
                        r.register_date AS registerDate
-                FROM Registration r
-                JOIN Event e ON e.id = r.event_id
+                FROM registration r
+                JOIN event e ON e.id = r.event_id
                 WHERE r.user_id = :userId && e.end_date_time <= NOW()
 
             """, nativeQuery = true)
